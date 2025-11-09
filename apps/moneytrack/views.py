@@ -16,28 +16,22 @@ class FinanceListView(View):
             'expenses': expenses
         })
 
-    def post(self, request):
-        # 判斷是哪一個表單送出
-        if 'add_income' in request.POST:
-            amount = request.POST.get('income_amount')
-            date = request.POST.get('income_date')
-            description = request.POST.get('income_description')
-            if amount and date:
-                Income.objects.create(
-                    amount=amount,
-                    date=date,
-                    description=description
-                )
-        elif 'add_expense' in request.POST:
-            amount = request.POST.get('expense_amount')
-            date = request.POST.get('expense_date')
-            description = request.POST.get('expense_description')
-            if amount and date:
-                Expense.objects.create(
-                    amount=amount,
-                    date=date,
-                    description=description
-                )
-        return redirect('moneytrack:finance_list')  # 送出表單後重新整理頁面
-
         
+class AddIncomeView(View):
+    def post(self, request):
+        amount = request.POST.get('income_amount')
+        date = request.POST.get('income_date')
+        description = request.POST.get('income_description')
+        if amount and date:
+            Income.objects.create(amount=amount, date=date, description=description)
+        return redirect('moneytrack:finance_list')
+
+
+class AddExpenseView(View):
+    def post(self, request):
+        amount = request.POST.get('expense_amount')
+        date = request.POST.get('expense_date')
+        description = request.POST.get('expense_description')
+        if amount and date:
+            Expense.objects.create(amount=amount, date=date, description=description)
+        return redirect('moneytrack:finance_list')

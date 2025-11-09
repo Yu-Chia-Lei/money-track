@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import redirect, render, redirect
+from django.shortcuts import redirect, render
 from .models import Book
 
 # Create your views here.
