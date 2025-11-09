@@ -1,0 +1,78 @@
+<!-- templates/library/book_detail.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+    <div class="max-w-3xl mx-auto py-12 px-6">
+        <!-- 頁面標題 -->
+        <h1 class="text-4xl font-bold text-gray-900 mb-8 border-b pb-4">
+            {{ page_title }}
+        </h1>
+
+        <!-- 書籍清單 -->
+        <div class="space-y-6 mb-10">
+            {% for apple in books %}
+                <div class="p-6 bg-white rounded-2xl shadow hover:shadow-lg transition-shadow">
+                    <h2 class="text-2xl font-semibold text-indigo-700 mb-2">
+                        {{ apple.title }}
+                    </h2>
+                    {% if apple.author %}
+                        <p class="text-gray-600">作者：{{ apple.author }}</p>
+                    {% endif %}
+                    {% if apple.published_date %}
+                        <p class="text-sm text-gray-500 mt-1">
+                            出版日期：{{ apple.published_date }}
+                        </p>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="text-gray-500 italic">目前沒有可顯示的書籍。</p>
+            {% endfor %}
+        </div>
+
+        <!-- 新增書籍表單 -->
+        <div class="bg-white rounded-2xl shadow p-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">📘 新增書籍</h2>
+            <form method="POST" action="{% url 'library:book_create' %}" class="space-y-5">
+                {% csrf_token %}
+
+                <div>
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1">書名</label>
+                    <input type="text" id="title" name="title" required
+                           class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2 shadow-sm">
+                </div>
+
+                <div>
+                    <label for="price" class="block text-sm font-medium text-gray-700 mb-1">價格</label>
+                    <input type="number" id="price" name="price" required min="0"
+                           class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2 shadow-sm">
+                </div>
+
+                <div>
+                    <label for="stock" class="block text-sm font-medium text-gray-700 mb-1">庫存</label>
+                    <input type="number" id="stock" name="stock" required min="0"
+                           class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2 shadow-sm">
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow transition">
+                        新增書籍
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
