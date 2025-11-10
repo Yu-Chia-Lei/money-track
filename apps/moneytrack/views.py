@@ -18,7 +18,7 @@ class FinanceListView(LoginRequiredMixin, View):
         incomes = Income.objects.filter(account__in=accounts).order_by('-date')
         expenses = Expense.objects.filter(account__in=accounts).order_by('-date')
 
-        return render(request, 'moneytrack/finance_list.html', {
+        return render(request, 'moneytrack/income_expense_form.html', {
             'accounts': accounts,
             'incomes': incomes,
             'expenses': expenses
@@ -100,7 +100,7 @@ class AddAccountView(LoginRequiredMixin, View):
         # 獨立新增帳戶
         bank_name = request.POST.get('bank_name')
         Account.objects.create(user=request.user, bank_name=bank_name, balance=Decimal('0'))
-        return redirect('moneytrack:finance_list')
+        return redirect('moneytrack:account_list')
 
 
 # 編輯收入
@@ -211,7 +211,7 @@ class EditAccountView(LoginRequiredMixin, View):
         account = get_object_or_404(Account, pk=pk, user=request.user)
         account.bank_name = request.POST.get('bank_name')
         account.save()
-        return redirect('moneytrack:finance_list')
+        return redirect('moneytrack:account_list')
 
 
 # 刪除帳戶
@@ -222,4 +222,4 @@ class DeleteAccountView(LoginRequiredMixin, View):
         Income.objects.filter(account=account).delete()
         Expense.objects.filter(account=account).delete()
         account.delete()
-        return redirect('moneytrack:finance_list')
+        return redirect('moneytrack:account_list')

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MoneyTrack{% endblock %}</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Reset & 基本樣式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: #333;
+    }
+
+    body {
+      background-color: #fafafa;
+      overflow-x: hidden;
+    }
+
+    /* Navbar */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 4rem;
+      background-color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .logo img {
+      width: 30px;
+      height: 30px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      margin-left: auto;
+      align-items: center;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .nav-links a:hover {
+      color: #4CAF50;
+    }
+
+    .user-icon {
+      width: 36px;
+      height: 36px;
+      background-color: #f3f3f3;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.3s;
+    }
+
+    .user-icon:hover {
+      background-color: #e2e2e2;
+      transform: scale(1.1);
+    }
+
+    /* Footer */
+    footer {
+      background-color: white;
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.9rem;
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    footer a {
+      text-decoration: none;
+      color: #333;
+    }
+
+    footer a:hover {
+      color: #4CAF50;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-40px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(40px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav>
+    <div class="nav-left">
+      <div class="logo">
+        <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" alt="logo">
+        MoneyTrack
+      </div>
+    </div>
+
+    <div class="nav-links">
+      <a href="#">首頁</a>
+      <a href="#">我的帳戶</a>
+      <a href="#">收支紀錄</a>
+      <a href="#">報表</a>
+      <div class="user-icon">👤</div>
+    </div>
+  </nav>
+
+  <!-- 主要內容 -->
+  {% block content %}{% endblock %}
+
+  <!-- Footer -->
+  <footer>
+    <a href="#">版權所有</a>
+    <a href="#">隱私權政策</a>
+    <a href="#">聯絡我們</a>
+    <a href="#">GitHub</a>
+  </footer>
+
+</body>
+</html>
