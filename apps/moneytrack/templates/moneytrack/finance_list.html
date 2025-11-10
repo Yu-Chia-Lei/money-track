@@ -8,7 +8,47 @@
 <body class="p-4">
     <h1>MoneyTrack</h1>
 
-    <!-- 新增收入表單 -->
+    <!-- ==== 帳戶管理 ==== -->
+    <h2>帳戶管理</h2>
+    <form method="post" action="{% url 'moneytrack:add_account' %}" class="mb-4">
+        {% csrf_token %}
+        <div class="mb-2">
+            <label>新增帳戶名稱：</label>
+            <input type="text" name="bank_name" required class="form-control" placeholder="輸入帳戶名稱">
+        </div>
+        <button type="submit" class="btn btn-primary">新增帳戶</button>
+    </form>
+
+    <table class="table table-striped table-bordered mb-4">
+        <thead class="table-dark">
+            <tr>
+                <th>帳戶名稱</th>
+                <th>餘額</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for acc in accounts %}
+                <tr>
+                    <td>{{ acc.bank_name }}</td>
+                    <td>{{ acc.balance }}</td>
+                    <td>
+                        <a href="{% url 'moneytrack:edit_account' acc.id %}" class="btn btn-sm btn-warning">編輯</a>
+                        <form method="post" action="{% url 'moneytrack:delete_account' acc.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">刪除</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center">目前沒有帳戶。</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ==== 收入管理 ==== -->
     <h2>新增收入</h2>
     <form method="post" action="{% url 'moneytrack:add_income' %}" class="mb-4">
         {% csrf_token %}
@@ -38,21 +78,26 @@
             <input type="date" name="date" required class="form-control">
         </div>
         <div class="mb-2">
+            <label>分類：</label>
+            <input type="text" name="category" class="form-control">
+        </div>
+        <div class="mb-2">
             <label>描述：</label>
             <input type="text" name="description" class="form-control">
         </div>
         <button type="submit" class="btn btn-success">新增收入</button>
     </form>
 
-    <!-- 收入表格 -->
     <h2>收入列表</h2>
-    <table class="table table-striped table-bordered">
+    <table class="table table-striped table-bordered mb-4">
         <thead class="table-dark">
             <tr>
                 <th>帳戶</th>
                 <th>金額</th>
                 <th>日期</th>
+                <th>分類</th>
                 <th>描述</th>
+                <th>操作</th>
             </tr>
         </thead>
         <tbody>
@@ -61,17 +106,25 @@
                     <td>{{ income.account.bank_name }}</td>
                     <td>{{ income.amount }}</td>
                     <td>{{ income.date }}</td>
+                    <td>{{ income.category }}</td>
                     <td>{{ income.description }}</td>
+                    <td>
+                        <a href="{% url 'moneytrack:edit_income' income.id %}" class="btn btn-sm btn-warning">編輯</a>
+                        <form method="post" action="{% url 'moneytrack:delete_income' income.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">刪除</button>
+                        </form>
+                    </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center">目前沒有收入紀錄。</td>
+                    <td colspan="6" class="text-center">目前沒有收入紀錄。</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <!-- 新增支出表單 -->
+    <!-- ==== 支出管理 ==== -->
     <h2>新增支出</h2>
     <form method="post" action="{% url 'moneytrack:add_expense' %}" class="mb-4">
         {% csrf_token %}
@@ -119,7 +172,6 @@
         <button type="submit" class="btn btn-danger">新增支出</button>
     </form>
 
-    <!-- 支出表格 -->
     <h2>支出列表</h2>
     <table class="table table-striped table-bordered">
         <thead class="table-dark">
@@ -130,6 +182,7 @@
                 <th>分類</th>
                 <th>描述</th>
                 <th>支付方式</th>
+                <th>操作</th>
             </tr>
         </thead>
         <tbody>
@@ -141,10 +194,17 @@
                     <td>{{ expense.category }}</td>
                     <td>{{ expense.description }}</td>
                     <td>{{ expense.payment_method }}</td>
+                    <td>
+                        <a href="{% url 'moneytrack:edit_expense' expense.id %}" class="btn btn-sm btn-warning">編輯</a>
+                        <form method="post" action="{% url 'moneytrack:delete_expense' expense.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">刪除</button>
+                        </form>
+                    </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center">目前沒有支出紀錄。</td>
+                    <td colspan="7" class="text-center">目前沒有支出紀錄。</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -167,6 +227,7 @@
     </script>
 </body>
 </html>
+
 
 
         

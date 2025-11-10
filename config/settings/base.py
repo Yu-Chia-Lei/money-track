@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'apps.library',
     'apps.moneytrack',
     'apps.core',
+    'apps.charts',
 ]
 
 MIDDLEWARE = [
