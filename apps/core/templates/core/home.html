@@ -32,6 +32,12 @@
       z-index: 10;
     }
 
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
     .logo {
       display: flex;
       align-items: center;
@@ -48,6 +54,7 @@
     .nav-links {
       display: flex;
       gap: 2rem;
+      margin-left: auto;
     }
 
     .nav-links a {
@@ -70,6 +77,13 @@
       align-items: center;
       font-size: 1.2rem;
       cursor: pointer;
+      margin-left: 2rem;
+      transition: background-color 0.3s, transform 0.3s;
+    }
+
+    .user-icon:hover {
+      background-color: #e2e2e2;
+      transform: scale(1.1);
     }
 
     /* Hero Section */
@@ -224,17 +238,20 @@
 <body>
 
   <nav>
-    <div class="logo">
-      <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" alt="logo">
-      MoneyTrack
+    <div class="nav-left">
+      <div class="logo">
+        <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" alt="logo">
+        MoneyTrack
+      </div>
     </div>
+
     <div class="nav-links">
       <a href="#">首頁</a>
       <a href="#">我的帳戶</a>
-      <a href="#">收支記錄</a>
+      <a href="#">收支紀錄</a>
       <a href="#">報表</a>
+      <div class="user-icon">👤</div>
     </div>
-    <div class="user-icon">👤</div>
   </nav>
 
   <section class="hero">
@@ -275,5 +292,7 @@
 
 </body>
 </html>
+
+
 
 
