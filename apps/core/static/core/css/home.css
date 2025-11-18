@@ -1,12 +1,7 @@
-{% extends 'core/base.html' %}
-{% load static %} 
+/* core/static/core/css/home.css */
 
-{% block title %}MoneyTrack 首頁{% endblock %}
-
-{% block extra_head %}
-<style>
-  /* Hero Section */
-  .hero {
+/* Hero Section */
+.hero {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -14,24 +9,24 @@
     background-color: white;
     animation: fadeIn 1.5s ease;
   }
-
+  
   .hero-text {
     max-width: 50%;
     animation: slideInLeft 1.5s ease;
   }
-
+  
   .hero-text h1 {
     font-size: 2.5rem;
     font-weight: 700;
     line-height: 1.4;
     margin-bottom: 2rem;
   }
-
+  
   .hero-buttons {
     display: flex;
     gap: 1.5rem;
   }
-
+  
   .btn-primary {
     background-color: #4CAF50;
     color: white;
@@ -44,12 +39,12 @@
     text-decoration: none; 
     display: inline-block; 
   }
-
+  
   .btn-primary:hover {
     transform: scale(1.05);
     background-color: #45a049;
   }
-
+  
   .btn-secondary {
     background-color: #eaeaea; 
     color: #333; 
@@ -62,24 +57,24 @@
     text-decoration: none; 
     display: inline-block; 
   }
-
+  
   .btn-secondary:hover {
     transform: scale(1.05);
     background-color: #d6d6d6;
   }
-
+  
   /* 用於控制 SVG 手機圖示的容器 */
   .hero-image-container {
     width: 320px; 
     height: auto; 
     animation: slideInRight 1.5s ease;
   }
-
+  
   .hero-image-container svg {
       width: 100%;
       height: auto;
   }
-
+  
   /* Features Section (使用 Font Awesome) */
   .features {
     display: flex;
@@ -88,7 +83,7 @@
     padding: 5rem 8rem;
     background-color: #fafafa;
   }
-
+  
   .feature-card {
     text-align: center;
     max-width: 220px; 
@@ -99,7 +94,7 @@
     box-shadow: none; 
     transition: transform 0.3s; 
   }
-
+  
   .feature-card:hover {
     transform: translateY(-6px);
     box-shadow: none; 
@@ -110,18 +105,18 @@
     color: #4CAF50; 
     margin-bottom: 1.5rem; 
   }
-
+  
   .feature-card h3 {
     font-size: 1.3rem;
     margin-bottom: 0.5rem;
     color: #333;
   }
-
+  
   .feature-card p {
     font-size: 0.95rem;
     color: #555;
   }
-
+  
   /* 響應式調整 */
   @media (max-width: 1024px) {
     .hero, .features {
@@ -131,7 +126,7 @@
       gap: 2rem; 
     }
   }
-
+  
   @media (max-width: 768px) {
     .hero {
       flex-direction: column; 
@@ -160,7 +155,7 @@
       max-width: 80%; 
     }
   }
-
+  
   @media (max-width: 480px) {
     .hero-text h1 {
       font-size: 2rem; 
@@ -173,55 +168,3 @@
         flex-direction: column; 
     }
   }
-</style>
-{% endblock %}
-
-{% block content %}
-<section class="hero">
-  <div class="hero-text">
-    <h1>輕鬆管理每一筆收支，<br>隨時掌握財務狀況</h1>
-    <div class="hero-buttons">
-      <a href="{% url 'moneytrack:finance_list' %}" class="btn-primary">新增收支</a>
-      <a href="{% url 'moneytrack:account_list' %}" class="btn-secondary">查看帳戶</a>
-    </div>
-  </div>
-  
-  <div class="hero-image-container">
-    <svg width="320" height="370" viewBox="0 0 320 370" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M204.609 52.834C248.609 101.334 337.109 46.334 316.609 133.834C296.109 221.334 207.609 292.834 140.609 308.834C73.609 324.834 -30.891 294.334 6.10901 204.834C43.109 115.334 160.609 4.33398 204.609 52.834Z" fill="#F0F4F8" fill-opacity="0.6"/>
-      <rect x="25" y="20" width="270" height="330" rx="40" fill="#333"/>
-      <rect x="35" y="30" width="250" height="310" rx="30" fill="white"/>
-      
-      <path d="M35 60C35 43.4315 48.4315 30 65 30H255C271.569 30 285 43.4315 285 60V80H35V60Z" fill="#4CAF50"/>
-      <rect x="110" y="40" width="100" height="10" rx="5" fill="#333" fill-opacity="0.2"/>
-      
-      <circle cx="75" cy="110" r="20" fill="#4CAF50"/>
-      <text x="75" y="110" dominant-baseline="central" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="Arial, sans-serif">$</text>
-      <rect x="115" y="100" width="150" height="20" rx="5" fill="#E0E0E0"/>
-      
-      <circle cx="75" cy="180" r="20" fill="#4285F4"/>
-      <rect x="115" y="170" width="150" height="20" rx="5" fill="#E0E0E0"/>
-      <circle cx="75" cy="250" r="20" fill="#DB4437"/>
-      <rect x="115" y="240" width="150" height="20" rx="5" fill="#E0E0E0"/>
-    </svg>
-  </div>
-</section>
-
-<section class="features">
-  <div class="feature-card">
-    <i class="fa-solid fa-wallet"></i>
-    <h3>帳戶管理</h3>
-    <p>管理所有帳戶，查看餘額明細</p>
-  </div>
-  <div class="feature-card">
-    <i class="fa-solid fa-receipt"></i>
-    <h3>收支記錄</h3>
-    <p>快速新增收入與支出，清楚掌握財務</p>
-  </div>
-  <div class="feature-card">
-    <i class="fa-solid fa-chart-bar"></i>
-    <h3>報表與統計</h3>
-    <p>用圖表查看收支趨勢與分類</p>
-  </div>
-</section>
-{% endblock %}

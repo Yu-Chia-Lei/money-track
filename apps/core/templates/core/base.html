@@ -6,6 +6,8 @@
   <title>{% block title %}MoneyTrack{% endblock %}</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <style>
     /* Reset & 基本樣式 */
@@ -38,7 +40,7 @@
     .nav-left {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 10px; /* Logo 和文字的間距 */
     }
 
     .logo {
@@ -47,11 +49,14 @@
       gap: 10px;
       font-size: 1.4rem;
       font-weight: 700;
+      text-decoration: none; 
+      color: #333; /* 確保 Logo 文字顏色正確 */
     }
-
-    .logo img {
-      width: 30px;
-      height: 30px;
+    
+    /* 調整 Logo SVG 的大小 */
+    .logo svg {
+        width: 30px;
+        height: 30px;
     }
 
     .nav-links {
@@ -89,28 +94,55 @@
       transform: scale(1.1);
     }
 
-    /* Footer */
+    /* Footer (左右對齊版本) */
     footer {
       background-color: white;
       text-align: center;
-      padding: 2rem;
+      padding: 2rem 4rem; 
       font-size: 0.9rem;
       border-top: 1px solid #ddd;
       display: flex;
-      justify-content: center;
+      justify-content: space-between; 
       align-items: center;
-      gap: 2rem;
       flex-wrap: wrap;
     }
 
     footer a {
       text-decoration: none;
       color: #333;
+      margin-right: 2rem;
+    }
+    
+    footer .footer-right a {
+        margin-right: 0;
     }
 
     footer a:hover {
       color: #4CAF50;
     }
+    
+    @media (max-width: 768px) {
+        nav, footer {
+            padding: 1rem 2rem;
+        }
+        .nav-links {
+            gap: 1rem;
+        }
+        footer {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        footer div {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem; 
+        }
+        footer a {
+            margin-right: 0;
+        }
+    }
+
 
     /* Animations */
     @keyframes fadeIn {
@@ -139,17 +171,19 @@
 
 <body>
 
-  <!-- Navbar -->
   <nav>
     <div class="nav-left">
-      <div class="logo">
-        <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" alt="logo">
+      <a href="{% url 'core:home' %}" class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="12" fill="#4CAF50"/>
+          <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="15" font-weight="bold" font-family="Arial, sans-serif">$</text>
+        </svg>
         MoneyTrack
-      </div>
+      </a>
     </div>
 
     <div class="nav-links">
-      <a href="#">首頁</a>
+      <a href="{% url 'core:home' %}">首頁</a>
       <a href="#">我的帳戶</a>
       <a href="#">收支紀錄</a>
       <a href="#">報表</a>
@@ -157,16 +191,21 @@
     </div>
   </nav>
 
-  <!-- 主要內容 -->
   {% block content %}{% endblock %}
 
-  <!-- Footer -->
   <footer>
-    <a href="#">版權所有</a>
-    <a href="#">隱私權政策</a>
-    <a href="#">聯絡我們</a>
-    <a href="#">GitHub</a>
+    <div class="footer-left">
+      <a href="#">版權所有</a>
+      <a href="#">隱私權政策</a>
+      <a href="#">聯絡我們</a>
+    </div>
+    <div class="footer-right">
+      <a href="#">GitHub</a>
+    </div>
   </footer>
+
+  
+  {% block extra_js %}{% endblock %}
 
 </body>
 </html>
