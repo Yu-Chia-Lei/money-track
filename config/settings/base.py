@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.library',
+    # 'apps.library',
     'apps.moneytrack',
     'apps.core',
     'apps.charts',

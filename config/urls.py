@@ -19,7 +19,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls), #http://127.0.0.1:8000/admin/
-    path('library/', include('apps.library.urls')), #http://127.0.0.1:8000/library/
+    # path('library/', include('apps.library.urls')), #http://127.0.0.1:8000/library/
     path('moneytrack/', include('apps.moneytrack.urls')), #http://127.0.0.1:8000/moneytrack/
     path('', include('apps.core.urls')), #http://127.0.0.1:8000/
     path('charts/', include('apps.charts.urls')),

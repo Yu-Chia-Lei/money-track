@@ -1,117 +1,12 @@
 {% extends "core/base.html" %}
 
+{% load static %}
 {% block title %}帳戶管理{% endblock %}
 
 {% block extra_css %}
-<style>
-/* 整個內容區置中 */
-.content-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 4rem 2rem;
-    gap: 3rem;
-}
 
-/* 表單卡片 */
-.card-form {
-    background-color: white;
-    padding: 2.5rem 3rem;
-    border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-    width: 100%;
-    max-width: 600px;
-    animation: fadeUp 1s ease;
-}
+<link rel="stylesheet" href="{% static 'moneytrack/css/account_list.css' %}" />
 
-/* 表單標籤和輸入欄 */
-.card-form label {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    display: block;
-}
-
-.card-form input {
-    width: 100%;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    margin-bottom: 1.5rem;
-    font-size: 1rem;
-}
-
-/* 按鈕 */
-.btn-primary {
-    background-color: #4CAF50;
-    color: white;
-    padding: 0.7rem 2rem;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s, background-color 0.3s;
-}
-
-.btn-primary:hover {
-    transform: scale(1.05);
-    background-color: #45a049;
-}
-
-.btn-warning {
-    background-color: #ffb74d;
-    border: none;
-    color: white;
-    padding: 0.4rem 0.8rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-}
-
-.btn-warning:hover {
-    background-color: #ffa726;
-    transform: scale(1.05);
-}
-
-.btn-danger {
-    background-color: #e57373;
-    border: none;
-    color: white;
-    padding: 0.4rem 0.8rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-}
-
-.btn-danger:hover {
-    background-color: #ef5350;
-    transform: scale(1.05);
-}
-
-/* 表格卡片 */
-.table-container {
-    background-color: white;
-    padding: 1.5rem 2rem;
-    border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-    width: 100%;
-    max-width: 900px;
-    animation: fadeUp 1s ease;
-}
-
-/* 表格標題 */
-.table thead.table-dark {
-    border-radius: 16px 16px 0 0;
-}
-
-/* 居中表格文字 */
-.table td, .table th {
-    text-align: center;
-}
-
-/* 小動畫 */
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(30px);}
-    to { opacity: 1; transform: translateY(0);}
-}
-</style>
 {% endblock %}
 
 {% block content %}

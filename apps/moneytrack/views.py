@@ -18,7 +18,7 @@ class FinanceListView(LoginRequiredMixin, View):
         incomes = Income.objects.filter(account__in=accounts).order_by('-date')
         expenses = Expense.objects.filter(account__in=accounts).order_by('-date')
 
-        return render(request, 'moneytrack/income_expense_form.html', {
+        return render(request, 'moneytrack/finance_list.html', {
             'accounts': accounts,
             'incomes': incomes,
             'expenses': expenses

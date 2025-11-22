@@ -1,3 +1,5 @@
+
+{% load static%}
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -9,7 +11,7 @@
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  {% load static%}
+  <!-- css -->
   <link rel="stylesheet" href="{% static 'core/css/global.css' %}" />
 
   
@@ -32,8 +34,8 @@
 
     <div class="nav-links">
       <a href="{% url 'core:home' %}">首頁</a>
-      <a href="#">我的帳戶</a>
-      <a href="#">收支紀錄</a>
+      <a href="{% url 'moneytrack:account_list' %}">我的帳戶</a>
+      <a href="{% url 'moneytrack:finance_list' %}">收支紀錄</a>
       <a href="#">報表</a>
       <div class="user-icon">👤</div>
     </div>
