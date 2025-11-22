@@ -1,5 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
+from django.conf import settings
 
 # -----------------------
 # 帳戶模型
@@ -7,7 +8,7 @@ from django.contrib.auth.models import User
 
 class Account(models.Model):
     """帳戶"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='accounts')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='accounts')
     bank_name = models.CharField(max_length=50)  # 例如：現金、中信銀行
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
