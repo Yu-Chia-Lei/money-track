@@ -67,6 +67,8 @@ nav {
   color: #333 !important; /* 確保強制覆蓋 */
 }
 
+
+
 .nav-links a:hover {
   color: #4CAF50;
 }
@@ -86,6 +88,26 @@ nav {
 
 .user-icon:hover {
   background-color: #e2e2e2;
+  transform: scale(1.1);
+}
+
+.user-icon-wrapper {
+  display: flex; /* 讓頭像和預設圖示都能在容器內置中對齊 */
+  align-items: center;
+  text-decoration: none;
+}
+
+/* 自訂頭像圖片樣式 */
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover; /* 確保圖片不變形 */
+  border: 2px solid #4CAF50; /* 給頭像一個綠色邊框 */
+  transition: transform 0.3s;
+}
+
+.user-avatar:hover {
   transform: scale(1.1);
 }
 
@@ -158,4 +180,5 @@ footer a:hover {
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(40px); }
   to { opacity: 1; transform: translateY(0); }
-}ㄋ
+}
+

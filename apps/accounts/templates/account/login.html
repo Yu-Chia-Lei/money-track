@@ -1,0 +1,126 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block title %}{% trans "登入" %}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+/* 自訂樣式，使表單置中且有卡片效果 */
+.login-container {
+    padding: 3rem 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh; 
+}
+.login-card {
+    background-color: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 450px;
+}
+.login-card h1 {
+    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 25px;
+    text-align: center;
+    color: #333;
+}
+.btn-primary {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+    font-weight: 600;
+    transition: transform 0.2s;
+}
+.btn-primary:hover {
+    background-color: #45a049;
+    border-color: #45a049;
+    transform: scale(1.02);
+}
+.social-login-btn {
+    background-color: #4285F4; /* Google Blue */
+    border-color: #4285F4;
+    color: white;
+    font-weight: 600;
+}
+.social-login-btn:hover {
+    background-color: #357ae8;
+    border-color: #357ae8;
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="login-container">
+    <div class="login-card">
+        <h1>{% trans "登入 MoneyTrack" %}</h1>
+
+        {% get_providers as socialaccount_providers %}
+        {% if socialaccount_providers %}
+            <div class="social-auth-links mb-4">
+                {% for provider in socialaccount_providers %}
+                    <a href="{% provider_login_url provider.id process='login' scope=provider.scope auth_params=provider.auth_params %}" 
+                       class="btn social-login-btn w-100 mb-2">
+                        {% if provider.id == 'google' %}
+                            <i class="fab fa-google"></i>
+                        {% endif %}
+                        使用 {{ provider.name }} 登入
+                    </a>
+                {% endfor %}
+            </div>
+            <div class="text-center text-muted mb-4">或使用您的帳號</div>
+        {% endif %}
+
+        <form class="login" method="POST" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="{{ form.login.id_for_label }}" class="form-label">{% trans "使用者名稱或電子郵件" %}</label>
+                {{ form.login }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.password.id_for_label }}" class="form-label">{% trans "密碼" %}</label>
+                {{ form.password }}
+            </div>
+
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+            
+            {% if form.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <button class="btn btn-primary w-100 mb-3" type="submit">{% trans "登入" %}</button>
+            
+            <div class="text-center">
+                <a href="{% url 'account_reset_password' %}" class="link-secondary">{% trans "忘記密碼？" %}</a>
+            </div>
+
+            {% if signup_url %}
+            <div class="text-center mt-3">
+                <p>還沒有帳號？ <a href="{{ signup_url }}" class="link-success">註冊</a></p>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
