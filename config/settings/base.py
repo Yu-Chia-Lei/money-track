@@ -34,6 +34,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne' ,
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -53,6 +54,9 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',  # Google 登入
+
+    # Channels（WebSocket 支援）
+    'channels'
 ]
 
 SITE_ID = 1
@@ -192,3 +196,41 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # 自訂使用者模型
 AUTH_USER_MODEL = 'accounts.User'
+
+# ==========================================
+# Cache 設定 - 使用 Redis
+# ==========================================
+REDIS_URI = os.getenv('REDIS_URI', 'redis://127.0.0.1:6379/1')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URI,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        # 'KEY_PREFIX': 'library',  # 所有 key 都會加上這個前綴
+        'TIMEOUT': 300,  # 預設快取時間 5 分鐘（單位：秒）
+    }
+}
+
+
+# ==========================================
+# ASGI 應用設定（支援 WebSocket）
+# ==========================================
+ASGI_APPLICATION = 'config.asgi.application'
+
+# ==========================================
+# Channel Layer 設定 - 使用 Redis
+# ==========================================
+# 直接使用 REDIS_URI，這樣密碼、host、port 都會自動帶入
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [REDIS_URI],  # 使用與 Cache 相同的連線設定
+        },
+    },
+}
+
+
