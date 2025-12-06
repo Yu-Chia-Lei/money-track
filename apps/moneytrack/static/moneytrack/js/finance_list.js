@@ -1,4 +1,36 @@
-// 帳戶選擇控制邏輯：新帳戶輸入框的顯示/隱藏
+/**
+ * apps/moneytrack/static/moneytrack/js/finance_list.js
+ * * 功能：
+ * 1. 處理收入/支出表單的 AJAX 提交
+ * 2. 處理「帳戶」下拉選單的切換邏輯 (顯示/隱藏新帳戶輸入框)
+ * 3. 即時更新介面 (餘額、新增的表格列)
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+    // --------------------------------------------------
+    // 1. 初始化帳戶選擇器 (切換 "新帳戶" 輸入框)
+    // --------------------------------------------------
+    // 對應 HTML 中的 ID
+    setupAccountSelect('income_account', 'new_income_account_name');
+    setupAccountSelect('expense_account', 'new_expense_account_name');
+
+    // --------------------------------------------------
+    // 2. 初始化 AJAX 表單提交
+    // --------------------------------------------------
+    // 參數: (Form ID, Table Body ID, 是否為收入)
+    setupAjaxForm('income-form', 'income-table-body', true);
+    setupAjaxForm('expense-form', 'expense-table-body', false);
+});
+
+
+// ==================================================
+//  核心功能函數
+// ==================================================
+
+/**
+ * 設定帳戶選擇控制邏輯
+ * 當選擇 "new" 時，顯示輸入框，否則隱藏
+ */
 function setupAccountSelect(selectId, newInputId) {
     const selectElement = document.getElementById(selectId);
     const newInputElement = document.getElementById(newInputId);
@@ -7,79 +39,138 @@ function setupAccountSelect(selectId, newInputId) {
         selectElement.addEventListener('change', function() {
             newInputElement.style.display = this.value === 'new' ? 'block' : 'none';
         });
-         // 初始化時檢查一次
+        
+        // 初始化檢查 (防止重新整理後狀態跑掉)
         if (selectElement.value === 'new') {
             newInputElement.style.display = 'block';
         }
     }
 }
 
-// 模態框中的收入/支出切換邏輯
-const btnSwitchExpense = document.getElementById('btn-switch-expense');
-const btnSwitchIncome = document.getElementById('btn-switch-income');
-const expenseForm = document.getElementById('expenseForm');
-const incomeForm = document.getElementById('incomeForm');
-const transactionModalElement = document.getElementById('transactionModal');
+/**
+ * 設定 AJAX 表單提交
+ * @param {string} formId 表單 ID
+ * @param {string} tbodyId 表格 Body ID
+ * @param {boolean} isIncome 是否為收入 (影響金額顏色與顯示方式)
+ */
+function setupAjaxForm(formId, tbodyId, isIncome) {
+    const form = document.getElementById(formId);
+    if (!form) return;
 
-function switchToExpense() {
-    // 視覺切換
-    btnSwitchExpense.classList.add('switch-active');
-    btnSwitchIncome.classList.remove('switch-active');
-    // 表單內容切換
-    expenseForm.style.display = 'block';
-    incomeForm.style.display = 'none';
-    // 金額顏色
-    document.getElementById('expense_amount').classList.add('text-danger');
-    document.getElementById('income_amount').classList.remove('text-success');
-}
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); // 阻止傳統頁面跳轉
 
-function switchToIncome() {
-    // 視覺切換
-    btnSwitchIncome.classList.add('switch-active');
-    btnSwitchExpense.classList.remove('switch-active');
-    // 表單內容切換
-    expenseForm.style.display = 'none';
-    incomeForm.style.display = 'block';
-    // 金額顏色
-    document.getElementById('expense_amount').classList.remove('text-danger');
-    document.getElementById('income_amount').classList.add('text-success');
-}
+        const formData = new FormData(form);
+        const accountVal = formData.get('account'); // 檢查是否選了 "新增帳戶"
 
-btnSwitchExpense.addEventListener('click', switchToExpense);
-btnSwitchIncome.addEventListener('click', switchToIncome);
+        // 使用 utils.js 的 sendRequest
+        sendRequest({
+            url: form.action, // 使用 form 標籤上的 action 屬性 (API URL)
+            method: 'POST',
+            data: formData,
+            showLoadingOverlay: false, // 若您有實作 loading 動畫可設為 true
+            onSuccess: (response) => {
+                if (response.success) {
+                    // 特殊情況：如果是創建了「新帳戶」
+                    // 為了讓另一個表單的下拉選單也同步更新，最簡單的方式是重新整理頁面
+                    if (accountVal === 'new') {
+                        alert(response.message + "\n(頁面將重新載入以更新帳戶列表)");
+                        window.location.reload();
+                        return;
+                    }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. 初始化帳戶選擇器
-    setupAccountSelect('expense_account_select', 'new_expense_account_name');
-    setupAccountSelect('income_account_select', 'new_income_account_name');
-    
-    // 2. 頁面載入時自動彈出 Modal
-    const urlParams = new URLSearchParams(window.location.search);
-    const modalParam = urlParams.get('modal');
+                    // 1. 更新畫面上的餘額
+                    updateBalance(response.data.account_id, response.data.new_balance);
 
-    if (transactionModalElement) {
-        const modal = new bootstrap.Modal(transactionModalElement);
-        
-        // 根據 URL 參數決定切換模式並打開 Modal
-        if (modalParam === 'income') {
-            switchToIncome();
-            modal.show();
-        } else if (modalParam === 'expense') {
-            switchToExpense();
-            modal.show();
-        } else if (urlParams.has('modal')) {
-            // 如果沒有指定 income/expense，預設彈出並停留在支出模式 (如圖)
-            switchToExpense();
-            modal.show();
-        }
+                    // 2. 動態新增一行到表格
+                    // 我們需要帳戶名稱來顯示，先從 select 選單中抓取目前的文字
+                    const selectEl = form.querySelector('select[name="account"]');
+                    const accountName = selectEl ? selectEl.options[selectEl.selectedIndex].text : '-';
+                    
+                    addTableRow(tbodyId, response.data, accountName, isIncome);
 
-        // Modal 關閉時的清理和重設邏輯
-        transactionModalElement.addEventListener('hidden.bs.modal', function () {
-            // 重設為支出表單 (預設狀態)
-            switchToExpense();
-            // 清除表單內容
-            expenseForm.reset();
-            incomeForm.reset();
+                    // 3. 重置表單
+                    form.reset();
+                    
+                    // 4. 把日期設回今天 (因為 reset 會清空所有欄位)
+                    const dateInput = form.querySelector('input[name="date"]');
+                    if(dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+                    // 可選：顯示成功提示
+                    // alert(response.message); 
+
+                } else {
+                    // 後端回傳 success: False
+                    alert('操作失敗: ' + (response.message || '未知錯誤'));
+                }
+            },
+            onError: (err) => {
+                console.error(err);
+                // utils.js 通常會處理錯誤提示，這裡做一個保險
+                alert('連線錯誤或伺服器異常，請稍後再試。');
+            }
         });
-    }
-});
+    });
+}
+
+/**
+ * 更新指定帳戶的餘額顯示
+ * 尋找帶有 data-account-id="..." 的元素
+ */
+function updateBalance(accountId, newBalance) {
+    // 這裡對應 HTML: <span class="account-balance" data-account-id="1">
+    const balanceElements = document.querySelectorAll(`.account-balance[data-account-id="${accountId}"]`);
+    
+    balanceElements.forEach(el => {
+        // 做一個簡單的視覺回饋 (紅色閃爍)
+        el.style.transition = "color 0.2s";
+        el.style.color = "red";
+        el.textContent = newBalance;
+        
+        setTimeout(() => {
+            el.style.color = ""; // 恢復原色
+        }, 1000);
+    });
+}
+
+/**
+ * 動態新增一行到表格頂部
+ */
+function addTableRow(tbodyId, data, accountName, isIncome) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+
+    // 移除 "目前沒有紀錄" 的空行 (如果有的話)
+    const emptyRow = tbody.querySelector('.empty-row');
+    if (emptyRow) emptyRow.remove();
+
+    const tr = document.createElement('tr');
+    tr.className = "table-success"; // Bootstrap 綠色背景，作為新增提示效果
+
+    // 根據是否為收入，決定金額樣式
+    const amountClass = isIncome ? 'text-success fw-bold' : 'text-danger fw-bold';
+    
+    // 編輯按鈕的連結 (暫時使用 JS 拼接，注意：若 URL 結構改變這裡也要改)
+    // 假設 URL 模式為 /moneytrack/finance/income/123/edit/
+    // 這裡只是一個權宜之計，為了讓新增的行也有編輯按鈕
+    const typeStr = isIncome ? 'income' : 'expense';
+    const editUrl = `/moneytrack/finance/${typeStr}/${data.id}/edit/`; 
+
+    // 依據 HTML 表格欄位順序組裝: 日期 | 金額 | 摘要 | 操作
+    tr.innerHTML = `
+        <td>${data.date}</td>
+        <td class="${amountClass}">${data.amount}</td>
+        <td>${data.category || ''} - ${accountName}</td>
+        <td>
+            <a href="${editUrl}" class="btn btn-sm btn-link p-0">編輯</a>
+        </td>
+    `;
+
+    // 插入到表格最前面 (tbody 的第一個子元素之前)
+    tbody.insertBefore(tr, tbody.firstChild);
+
+    // 1秒後移除高亮背景
+    setTimeout(() => {
+        tr.classList.remove('table-success');
+    }, 1000);
+}

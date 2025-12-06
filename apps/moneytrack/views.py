@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .models import Income, Expense, Account
 from django.contrib.auth.mixins import LoginRequiredMixin
 from decimal import Decimal
@@ -223,3 +223,118 @@ class DeleteAccountView(LoginRequiredMixin, View):
         Expense.objects.filter(account=account).delete()
         account.delete()
         return redirect('moneytrack:account_list')
+
+
+# ==================== AJAX API ====================
+
+class AddIncomeAPIView(LoginRequiredMixin, View):
+    """新增收入 API（AJAX 版本）"""
+
+    def post(self, request):
+        try:
+            # 1. 獲取資料
+            account_id = request.POST.get('account')
+            # 處理金額可能的格式問題
+            amount_str = request.POST.get('amount')
+            if not amount_str:
+                return JsonResponse({'success': False, 'message': '請輸入金額'}, status=400)
+            amount = Decimal(amount_str)
+            
+            date = request.POST.get('date')
+            category = request.POST.get('category')
+            description = request.POST.get('description')
+
+            # 2. 處理帳戶
+            if account_id == 'new':
+                bank_name = request.POST.get('new_account_name')
+                if not bank_name:
+                    return JsonResponse({'success': False, 'message': '請輸入新帳戶名稱'}, status=400)
+                account = Account.objects.create(user=request.user, bank_name=bank_name, balance=Decimal('0'))
+            else:
+                account = get_object_or_404(Account, id=account_id, user=request.user)
+
+            # 3. 新增收入
+            # 注意：因為您的 Income Model save() 方法已經寫了 account.balance += amount
+            # 所以這裡不需要再手動更新餘額，否則會變兩倍！
+            income = Income.objects.create(
+                account=account,
+                amount=amount,
+                date=date,
+                category=category,
+                description=description
+            )
+
+            # 4. 獲取最新餘額回傳給前端
+            account.refresh_from_db()
+
+            return JsonResponse({
+                'success': True,
+                'message': '收入新增成功！',
+                'data': {
+                    'id': income.id,
+                    'date': income.date,
+                    'category': income.category,
+                    'description': income.description,
+                    'amount': income.amount,
+                    'account_id': account.id,
+                    'new_balance': account.balance,
+                    'type': 'income'
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+class AddExpenseAPIView(LoginRequiredMixin, View):
+    """新增支出 API（AJAX 版本）"""
+
+    def post(self, request):
+        try:
+            account_id = request.POST.get('account')
+            amount_str = request.POST.get('amount')
+            if not amount_str:
+                return JsonResponse({'success': False, 'message': '請輸入金額'}, status=400)
+            amount = Decimal(amount_str)
+
+            date = request.POST.get('date')
+            category = request.POST.get('category')
+            description = request.POST.get('description')
+            payment_method = request.POST.get('payment_method')
+
+            if account_id == 'new':
+                bank_name = request.POST.get('new_account_name')
+                if not bank_name:
+                    return JsonResponse({'success': False, 'message': '請輸入新帳戶名稱'}, status=400)
+                account = Account.objects.create(user=request.user, bank_name=bank_name, balance=Decimal('0'))
+            else:
+                account = get_object_or_404(Account, id=account_id, user=request.user)
+
+            # 注意：Expense Model save() 也會自動扣除餘額
+            expense = Expense.objects.create(
+                account=account,
+                amount=amount,
+                date=date,
+                category=category,
+                description=description,
+                payment_method=payment_method
+            )
+
+            account.refresh_from_db()
+
+            return JsonResponse({
+                'success': True,
+                'message': '支出新增成功！',
+                'data': {
+                    'id': expense.id,
+                    'date': expense.date,
+                    'category': expense.category,
+                    'description': expense.description,
+                    'payment_method': expense.payment_method,
+                    'amount': expense.amount,
+                    'account_id': account.id,
+                    'new_balance': account.balance,
+                    'type': 'expense'
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)

@@ -20,6 +20,9 @@ urlpatterns = [
     path('accounts/<int:pk>/edit/', views.EditAccountView.as_view(), name='edit_account'),
     path('accounts/<int:pk>/delete/', views.DeleteAccountView.as_view(), name='delete_account'),
     
+# ==================== AJAX API URLs (新增部分) ====================
+    path('api/add-income/', views.AddIncomeAPIView.as_view(), name='api_add_income'),
+    path('api/add-expense/', views.AddExpenseAPIView.as_view(), name='api_add_expense'),
 
 
 
