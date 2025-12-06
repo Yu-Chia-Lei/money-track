@@ -12,13 +12,10 @@ response = requests.post(
     'https://jsonplaceholder.typicode.com/posts',
     json=new_post  # 自動轉為 JSON 並設定 Content-Type
 )
-
+print(response.json())
 if response.status_code == 201:  # 201 Created
     created_post = response.json()
     print(f"文章已建立！ID: {created_post['id']}")
     print(f"標題：{created_post['title']}")
 else:
     print("建立失敗")
-
-
-
