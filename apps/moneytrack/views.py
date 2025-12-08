@@ -156,7 +156,13 @@ class EditExpenseView(LoginRequiredMixin, View):
     def get(self, request, pk):
         expense = get_object_or_404(Expense, pk=pk, account__user=request.user)
         accounts = Account.objects.filter(user=request.user)
-        return render(request, 'moneytrack/edit_expense.html', {'expense': expense, 'accounts': accounts})
+        payment_methods = ["現金", "信用卡", "銀行轉帳", "悠遊卡"]  # ⭐ 加這行
+
+        return render(request, 'moneytrack/edit_expense.html', {
+            'expense': expense,
+            'accounts': accounts,
+            'payment_methods': payment_methods,  # ⭐ 傳給前端
+        })
 
     def post(self, request, pk):
         expense = get_object_or_404(Expense, pk=pk, account__user=request.user)
