@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .models import Income, Expense, Account
 from django.contrib.auth.mixins import LoginRequiredMixin
 from decimal import Decimal
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth, TruncDay, TruncWeek
+from django.utils import timezone
+import datetime
+
 
 # class HelloWorldView(View):
 #     def get(self, request):
@@ -228,3 +233,103 @@ class DeleteAccountView(LoginRequiredMixin, View):
         Expense.objects.filter(account=account).delete()
         account.delete()
         return redirect('moneytrack:account_list')
+
+# 圖表頁面
+class ChartsPageView(LoginRequiredMixin, View):
+    login_url = '/accounts/login/'
+    
+    def get(self, request):
+        return render(request, 'moneytrack/charts.html')
+
+class ChartDataAPI(LoginRequiredMixin, View):
+    def get(self, request):
+        user = request.user
+        mode = request.GET.get('mode', 'month')
+        today = timezone.localdate()
+        
+        # 初始 QuerySet
+        expenses = Expense.objects.filter(account__user=user)
+        incomes = Income.objects.filter(account__user=user)
+        
+        # --- A. 日期篩選 (這部分邏輯不變，確保摘要數字跟圖表範圍一致) ---
+        date_format = '%Y-%m'
+        trunc_func = TruncMonth('date') # 預設
+
+        if mode == 'day':
+            start_date = today.replace(day=1)
+            trunc_func = TruncDay('date')
+            date_format = '%Y-%m-%d'
+        elif mode == 'week':
+            start_date = today - datetime.timedelta(weeks=12)
+            trunc_func = TruncWeek('date')
+            date_format = '%Y-%m-%d'
+        else: # month
+            start_date = today - datetime.timedelta(days=365)
+            trunc_func = TruncMonth('date')
+            date_format = '%Y-%m'
+
+        # 應用篩選
+        expenses = expenses.filter(date__gte=start_date)
+        incomes = incomes.filter(date__gte=start_date)
+
+        # ==========================================
+        # [新增] 1. 計算摘要總金額 (Summary Totals)
+        # ==========================================
+        # 使用 aggregate 加總，若無資料回傳 None，需轉為 0
+        total_expense = expenses.aggregate(sum=Sum('amount'))['sum'] or 0
+        total_income = incomes.aggregate(sum=Sum('amount'))['sum'] or 0
+        balance = total_income - total_expense
+
+        # --- B. 聚合數據 (圖表用) ---
+        trend_expenses = expenses.annotate(period=trunc_func).values('period').annotate(total=Sum('amount')).order_by('period')
+        trend_incomes = incomes.annotate(period=trunc_func).values('period').annotate(total=Sum('amount')).order_by('period')
+        
+        category_stats = expenses.values('category').annotate(total=Sum('amount')).order_by('-total')
+        
+        # 帳戶餘額 (注意：帳戶餘額通常顯示「當下總資產」，不應受日期篩選影響)
+        # 如果您希望顯示「該期間的帳戶變動」，邏輯會很複雜，建議維持顯示「當前總餘額」
+        accounts = Account.objects.filter(user=user)
+        
+        payment_stats = expenses.values('payment_method').annotate(total=Sum('amount')).order_by('-total')
+
+        # --- C. 格式化回傳 ---
+        all_periods = set()
+        exp_dict = {}
+        inc_dict = {}
+        for item in trend_expenses:
+            label = item['period'].strftime(date_format)
+            all_periods.add(label)
+            exp_dict[label] = float(item['total'])
+        for item in trend_incomes:
+            label = item['period'].strftime(date_format)
+            all_periods.add(label)
+            inc_dict[label] = float(item['total'])
+        sorted_labels = sorted(list(all_periods))
+
+        data = {
+            # [新增] 傳遞摘要數據
+            'summary': {
+                'income': float(total_income),
+                'expense': float(total_expense),
+                'balance': float(balance)
+            },
+            'trend': {
+                'labels': sorted_labels,
+                'expense': [exp_dict.get(label, 0) for label in sorted_labels],
+                'income': [inc_dict.get(label, 0) for label in sorted_labels],
+            },
+            'category': {
+                'labels': [item['category'] if item['category'] else '未分類' for item in category_stats],
+                'data': [float(item['total']) for item in category_stats]
+            },
+            'account': {
+                'labels': list(accounts.values_list('bank_name', flat=True)),
+                'data': [float(b) for b in accounts.values_list('balance', flat=True)]
+            },
+            'payment': {
+                'labels': [item['payment_method'] for item in payment_stats],
+                'data': [float(item['total']) for item in payment_stats]
+            }
+        }
+        
+        return JsonResponse(data)

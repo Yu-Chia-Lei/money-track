@@ -1,0 +1,194 @@
+/* ====== 針對導航列連結的緊急修正 (覆蓋 base.html) ====== */
+/* 由於 base.html 的樣式權重太低，導致 Bootstrap 或瀏覽器預設樣式勝利，
+   我們在此處強制覆寫，以確保連結顏色正確。 */
+   nav .nav-links a,
+   nav .nav-links a:link,
+   nav .nav-links a:visited,
+   nav .nav-links a:active { 
+       color: #333 !important;
+   }
+   /* ================================================= */
+   /* ====== Modal 樣式覆蓋 (更接近您的圖片) ====== */
+   .modal-dialog {
+       max-width: 500px; /* 限制對話框寬度 */
+   }
+   
+   .modal-content {
+       border-radius: 15px; /* 圓角 */
+   }
+   
+   .modal-header {
+       border-bottom: none;
+       padding: 1.5rem 1.5rem 0.5rem 1.5rem; /* 調整內邊距 */
+   }
+   
+   .modal-title {
+       text-align: center;
+       font-weight: 700;
+       width: 100%;
+       font-size: 1.5rem; /* 標題字體大小 */
+       color: #333;
+   }
+   
+   .modal-body {
+       padding: 1.5rem; /* 調整內邊距 */
+   }
+   
+   /* 支出/收入 切換按鈕樣式 */
+   .transaction-switch-wrapper {
+       display: flex;
+       justify-content: center; 
+       gap: 0.5rem; 
+       margin-bottom: 1.5rem; 
+       background-color: #f0f0f0; /* 背景色 */
+       border-radius: 25px;
+       padding: 5px;
+   }
+   
+   .transaction-switch-btn {
+       padding: 0.6rem 1.8rem;
+       border: none;
+       border-radius: 20px; 
+       font-weight: 600;
+       cursor: pointer;
+       transition: all 0.2s;
+       flex: 1; 
+       max-width: 150px; 
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       gap: 8px; 
+       font-size: 1rem;
+       background-color: transparent; /* 預設透明 */
+       color: #555;
+   }
+   
+   /* 活躍狀態樣式 */
+   .transaction-switch-btn.switch-active {
+       background-color: white; 
+       color: white;
+       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+   }
+   
+   /* 支出被選中時的顏色 */
+   #btn-switch-expense.switch-active {
+       color: #4CAF50; /* 圖片中的綠色 */
+   }
+   
+   /* 收入被選中時的顏色 */
+   #btn-switch-income.switch-active {
+       color: #4CAF50; /* 圖片中的綠色 */
+   }
+   
+   
+   /* 表單欄位排版 */
+   .form-row-custom {
+       display: flex;
+       align-items: center; 
+       margin-bottom: 1rem; 
+   }
+   .form-row-custom label {
+       flex: 0 0 70px; 
+       font-weight: normal; 
+       color: #555; 
+       font-size: 0.95rem;
+       margin-bottom: 0;
+   }
+   .form-row-custom .form-control,
+   .form-row-custom .form-select,
+   .form-row-custom .input-group {
+       flex: 1; 
+   }
+   .form-row-custom .form-control,
+   .form-row-custom .form-select {
+       border-radius: 8px; 
+       border-color: #e0e0e0; 
+       padding: 0.6rem 0.8rem; 
+       font-size: 0.95rem;
+   }
+   /* 金額輸入框特定樣式 */
+   .amount-input-group .form-control {
+       font-size: 1.5rem; 
+       font-weight: bold;
+       text-align: right; 
+       border: none;
+       padding: 0.5rem 0.5rem 0.5rem 0;
+   }
+   
+   .amount-input-group .input-group-text {
+       background-color: white;
+       border: none;
+       color: #555;
+       font-weight: bold;
+       padding-left: 1rem;
+   }
+   
+   .amount-input-container {
+       border: 1px solid #e0e0e0;
+       border-radius: 8px;
+       padding: 0;
+       margin-bottom: 1rem;
+       display: flex;
+   }
+   .amount-input-container:focus-within {
+       border-color: #88B04B;
+       box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+   }
+   
+   
+   /* 儲存記錄按鈕 */
+   .btn-save-record {
+       background-color: #4CAF50; 
+       color: white;
+       border-radius: 12px; 
+       font-size: 1.1rem;
+       padding: 0.8rem 1.5rem;
+       font-weight: bold;
+       border: none;
+       margin-top: 1rem; 
+   }
+   .btn-save-record:hover {
+       background-color: #45a049;
+   }
+   
+   /* Tab/List 樣式 */
+   .tab-container {
+       max-width: 900px;
+       margin: 2rem auto;
+       background-color: white;
+       border-radius: 20px;
+       box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+       overflow: hidden;
+   }
+   
+   .tab-buttons .nav-link {
+       font-weight: 600;
+       color: #555;
+   }
+   .tab-buttons .nav-link.active {
+       color: #4CAF50;
+       border-color: transparent transparent #4CAF50 transparent !important;
+       background-color: white !important;
+   }
+   
+   .table-card {
+       width: 100%;
+       border-collapse: separate;
+       border-spacing: 0;
+       border-radius: 12px;
+       overflow: hidden;
+       box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+   }
+   .table-card th {
+       background-color: #4CAF50;
+       color: white;
+       padding: 0.75rem;
+       text-align: left;
+   }
+   .table-card td {
+       background-color: white;
+       padding: 0.75rem;
+   }
+   .table-card tr:not(:last-child) td {
+       border-bottom: 1px solid #ddd;
+   }
