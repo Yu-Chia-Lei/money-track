@@ -4,7 +4,7 @@ from django.http import HttpResponse, JsonResponse
 from .models import Income, Expense, Account
 from django.contrib.auth.mixins import LoginRequiredMixin
 from decimal import Decimal
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth, TruncDay, TruncWeek
 from django.utils import timezone
 import datetime
@@ -255,15 +255,13 @@ class ChartDataAPI(LoginRequiredMixin, View):
         date_format = '%Y-%m'
         trunc_func = TruncMonth('date') # 預設
 
-        if mode == 'day':
-            start_date = today.replace(day=1)
-            trunc_func = TruncDay('date')
-            date_format = '%Y-%m-%d'
-        elif mode == 'week':
+        if mode == 'week':
+            # 週視圖：顯示「最近 12 週」
             start_date = today - datetime.timedelta(weeks=12)
             trunc_func = TruncWeek('date')
             date_format = '%Y-%m-%d'
-        else: # month
+        else: 
+            # (預設) 月視圖：顯示「最近 12 個月」
             start_date = today - datetime.timedelta(days=365)
             trunc_func = TruncMonth('date')
             date_format = '%Y-%m'
@@ -290,7 +288,7 @@ class ChartDataAPI(LoginRequiredMixin, View):
         # 如果您希望顯示「該期間的帳戶變動」，邏輯會很複雜，建議維持顯示「當前總餘額」
         accounts = Account.objects.filter(user=user)
         
-        payment_stats = expenses.values('payment_method').annotate(total=Sum('amount')).order_by('-total')
+        payment_stats = expenses.values('payment_method').annotate(count=Count('id')).order_by('-count')
 
         # --- C. 格式化回傳 ---
         all_periods = set()
@@ -328,7 +326,7 @@ class ChartDataAPI(LoginRequiredMixin, View):
             },
             'payment': {
                 'labels': [item['payment_method'] for item in payment_stats],
-                'data': [float(item['total']) for item in payment_stats]
+                'data': [float(item['count']) for item in payment_stats]
             }
         }
         

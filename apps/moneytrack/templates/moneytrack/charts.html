@@ -124,7 +124,6 @@
     <div class="btn-group-custom">
         <button type="button" class="btn-custom active" onclick="loadChartData('month', this)">月報表</button>
         <button type="button" class="btn-custom" onclick="loadChartData('week', this)">週報表</button>
-        <button type="button" class="btn-custom" onclick="loadChartData('day', this)">日報表</button>
     </div>
 
     <div class="summary-row">
@@ -289,37 +288,64 @@
         });
     }
 
-    // 4. 水平長條 (支付方式) - [已修正] 限制最大粗度，防止單筆資料時過肥
+    // 4. 水平長條 (支付方式) - [修改] 改為顯示百分比
     function renderPaymentChart(data) {
         const ctx = document.getElementById('paymentChart').getContext('2d');
         if (paymentChart) paymentChart.destroy();
+
+        // 1. 先計算總次數 (為了算百分比)
+        // 這裡把 data.data (次數陣列) 加總
+        const totalCount = data.data.reduce((sum, val) => sum + val, 0);
+
+        // 2. 將原始次數轉換為百分比 (保留一位小數)
+        const percentageData = data.data.map(val => {
+            return totalCount === 0 ? 0 : ((val / totalCount) * 100).toFixed(1);
+        });
 
         paymentChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: data.labels,
                 datasets: [{ 
-                    label: '金額', 
-                    data: data.data, 
+                    label: '使用佔比', 
+                    data: percentageData, // [關鍵] 這裡放算好的百分比，而不是原始次數
                     backgroundColor: '#f6c23e', 
                     borderRadius: 4,
-                    //maxBarThickness: 40, // [關鍵修正] 設定最大寬度為 40px
-                    barPercentage: 0.6   // [選用] 控制長條圖佔分類空間的比例
+                    maxBarThickness: 30, 
                 }]
             },
             options: { 
-                indexAxis: 'y', // 水平長條圖
+                indexAxis: 'y', 
                 responsive: true, 
                 maintainAspectRatio: false, 
                 plugins: { 
-                    legend: { display: false } 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            // [關鍵] 自定義 Tooltip：同時顯示 % 和 次數
+                            label: function(context) {
+                                const percentage = context.raw; // 這是上面算好的百分比
+                                const count = data.data[context.dataIndex]; // 透過索引找回原始次數
+                                return `${percentage}% (${count} 次)`;
+                            }
+                        }
+                    }
                 },
                 scales: { 
                     x: { 
-                        grid: { display: false } // 隱藏 X 軸格線，讓畫面更乾淨
+                        grid: { display: false },
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%'; // [修改] X 軸刻度加上 %
+                            }
+                        },
+                        // 如果您希望 X 軸固定 0~100%，可以把下面這行註解打開，
+                        // 但通常自動縮放 (auto-scale) 比較能看清楚差異
+                        // max: 100 
                     },
                     y: { 
-                        grid: { display: false } // 隱藏 Y 軸格線
+                        grid: { display: false }
                     }
                 } 
             }
