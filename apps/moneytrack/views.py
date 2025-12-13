@@ -55,8 +55,8 @@ class AddIncomeView(LoginRequiredMixin, View):
         )
 
         # 更新帳戶餘額
-        account.balance += amount
-        account.save()
+        # account.balance += amount
+        # account.save()
 
         return redirect('moneytrack:finance_list')
 
@@ -88,8 +88,8 @@ class AddExpenseView(LoginRequiredMixin, View):
         )
 
         # 扣除帳戶餘額
-        account.balance -= amount
-        account.save()
+        # account.balance -= amount
+        # account.save()
 
         return redirect('moneytrack:finance_list')
 
