@@ -8,6 +8,8 @@ from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth, TruncDay, TruncWeek
 from django.utils import timezone
 import datetime
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 
 # class HelloWorldView(View):
@@ -332,3 +334,53 @@ class ChartDataAPI(LoginRequiredMixin, View):
         }
         
         return JsonResponse(data)
+
+
+# ==========================================
+# # AJAX API 端點
+# ==========================================
+
+@login_required
+@require_POST
+def delete_expense_ajax(request, pk):
+    """
+    非同步刪除支出，並回補帳戶餘額
+    """
+    expense = get_object_or_404(Expense, pk=pk, account__user=request.user)
+    
+    try:
+        # 1. 處理餘額回補
+        account = expense.account
+        account.balance += expense.amount
+        account.save()
+        
+        # 2. 刪除
+        expense.delete()
+        
+        return JsonResponse({'status': 'success', 'message': '支出已刪除'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def delete_income_ajax(request, pk):
+    """
+    非同步刪除收入，並扣除帳戶餘額
+    """
+    income = get_object_or_404(Income, pk=pk, account__user=request.user)
+    
+    try:
+        # 1. 處理餘額扣除
+        account = income.account
+        account.balance -= income.amount
+        account.save()
+        
+        # 2. 刪除
+        income.delete()
+        
+        return JsonResponse({'status': 'success', 'message': '收入已刪除'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+

@@ -53,10 +53,12 @@
                             <td>{{ income.description }}</td>
                             <td>
                                 <a href="{% url 'moneytrack:edit_income' income.id %}" class="btn btn-sm btn-warning">編輯</a>
-                                <form method="post" action="{% url 'moneytrack:delete_income' income.id %}" style="display:inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger">刪除</button>
-                                </form>
+                                <button type="button" 
+                                        class="btn btn-sm btn-danger btn-delete-ajax"
+                                        data-url="{% url 'moneytrack:delete_income_ajax' income.id %}"
+                                        data-type="收入">
+                                        刪除
+                                </button>
                             </td>
                         </tr>
                         {% empty %}
@@ -92,10 +94,12 @@
                             <td>{{ expense.payment_method }}</td>
                             <td>
                                 <a href="{% url 'moneytrack:edit_expense' expense.id %}" class="btn btn-sm btn-warning">編輯</a>
-                                <form method="post" action="{% url 'moneytrack:delete_expense' expense.id %}" style="display:inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger">刪除</button>
-                                </form>
+                                <button type="button" 
+                                        class="btn btn-sm btn-danger btn-delete-ajax"
+                                        data-url="{% url 'moneytrack:delete_expense_ajax' expense.id %}"
+                                        data-type="支出">
+                                        刪除
+                                </button>
                             </td>
                         </tr>
                         {% empty %}

@@ -26,6 +26,8 @@ urlpatterns = [
 # 圖表頁面
     path('charts/', views.ChartsPageView.as_view(), name='charts_view'),
 
-
-
+# # AJAX API 端點
+    path('api/expense/delete/<int:pk>/', views.delete_expense_ajax, name='delete_expense_ajax'),
+    path('api/income/delete/<int:pk>/', views.delete_income_ajax, name='delete_income_ajax'),
 ]
+
