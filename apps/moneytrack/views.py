@@ -10,6 +10,7 @@ from django.utils import timezone
 import datetime
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from operator import attrgetter
 
 
 # class HelloWorldView(View):
@@ -18,18 +19,54 @@ from django.contrib.auth.decorators import login_required
 
 class FinanceListView(LoginRequiredMixin, View):
     def get(self, request):
-        # 只抓登入使用者的帳戶
+        # 1. 取得篩選參數
+        filter_type = request.GET.get('type', 'all')  # all, income, expense
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+
+        # 2. 基礎查詢：只抓登入使用者的帳戶
         accounts = Account.objects.filter(user=request.user)
         
-        # 收入、支出按帳戶分組
-        incomes = Income.objects.filter(account__in=accounts).order_by('-date')
-        expenses = Expense.objects.filter(account__in=accounts).order_by('-date')
+        income_list = []
+        expense_list = []
 
-        return render(request, 'moneytrack/finance_list.html', {
+        # 3. 根據篩選類型撈取資料，並標記類型 (record_type)
+        if filter_type in ['all', 'income']:
+            incomes = Income.objects.filter(account__in=accounts)
+            if start_date:
+                incomes = incomes.filter(date__gte=start_date)
+            if end_date:
+                incomes = incomes.filter(date__lte=end_date)
+            
+            # 轉為 list 並標記
+            income_list = list(incomes)
+            for i in income_list:
+                i.record_type = 'income'
+
+        if filter_type in ['all', 'expense']:
+            expenses = Expense.objects.filter(account__in=accounts)
+            if start_date:
+                expenses = expenses.filter(date__gte=start_date)
+            if end_date:
+                expenses = expenses.filter(date__lte=end_date)
+            
+            # 轉為 list 並標記
+            expense_list = list(expenses)
+            for e in expense_list:
+                e.record_type = 'expense'
+
+        # 4. 合併並按日期排序 (由新到舊)
+        transactions = sorted(income_list + expense_list, key=attrgetter('date'), reverse=True)
+
+        context = {
             'accounts': accounts,
-            'incomes': incomes,
-            'expenses': expenses
-        })
+            'transactions': transactions,  # 傳遞合併後的列表
+            'filter_type': filter_type,
+            'start_date': start_date,
+            'end_date': end_date,
+        }
+
+        return render(request, 'moneytrack/finance_list.html', context)
 
 
 class AddIncomeView(LoginRequiredMixin, View):
@@ -384,3 +421,11 @@ def delete_income_ajax(request, pk):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
+class DeleteAccountAjaxView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        try:
+            account = get_object_or_404(Account, pk=pk, user=request.user)
+            account.delete()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

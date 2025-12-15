@@ -5,106 +5,132 @@
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
 <link rel="stylesheet" href="{% static 'moneytrack/css/finance_list.css' %}" />
 {% endblock %}
 
 {% block content %}
 <div class="container my-5">
+
     <div class="text-center mb-4">
         <button type="button" class="btn btn-lg btn-success btn-new-record" data-bs-toggle="modal" data-bs-target="#transactionModal">
             ✨ 新增收支記錄
         </button>
     </div>
 
-    <div class="tab-container p-4">
-        <ul class="nav nav-tabs tab-buttons mb-3" id="transactionTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="income-tab" data-bs-toggle="tab" data-bs-target="#income-list" type="button" role="tab" aria-controls="income-list" aria-selected="true">
-                    收入列表
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="expense-tab" data-bs-toggle="tab" data-bs-target="#expense-list" type="button" role="tab" aria-controls="expense-list" aria-selected="false">
-                    支出列表
-                </button>
-            </li>
-        </ul>
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="income-list" role="tabpanel" aria-labelledby="income-tab">
-                <table class="table-card table">
-                    <thead>
-                        <tr>
-                            <th>帳戶</th>
-                            <th>金額</th>
-                            <th>日期</th>
-                            <th>分類</th>
-                            <th>描述</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for income in incomes %}
-                        <tr>
-                            <td>{{ income.account.bank_name }}</td>
-                            <td><span class="text-success">{{ income.amount }}</span></td>
-                            <td>{{ income.date }}</td>
-                            <td>{{ income.category }}</td>
-                            <td>{{ income.description }}</td>
-                            <td>
-                                <a href="{% url 'moneytrack:edit_income' income.id %}" class="btn btn-sm btn-warning">編輯</a>
-                                <button type="button" 
-                                        class="btn btn-sm btn-danger btn-delete-ajax"
-                                        data-url="{% url 'moneytrack:delete_income_ajax' income.id %}"
-                                        data-type="收入">
-                                        刪除
-                                </button>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center">目前沒有收入紀錄。</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <div class="card p-3 shadow-sm border-0 mb-4">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">類型</label>
+                <select name="type" class="form-select form-select-sm">
+                    <option value="all" {% if filter_type == 'all' %}selected{% endif %}>全部收支</option>
+                    <option value="income" {% if filter_type == 'income' %}selected{% endif %}>只看收入</option>
+                    <option value="expense" {% if filter_type == 'expense' %}selected{% endif %}>只看支出</option>
+                </select>
             </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">開始日期</label>
+                <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date|default:'' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">結束日期</label>
+                <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date|default:'' }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="fa-solid fa-filter"></i> 篩選
+                </button>
+            </div>
+        </form>
+    </div>
 
-            <div class="tab-pane fade" id="expense-list" role="tabpanel" aria-labelledby="expense-tab">
-                <table class="table-card table">
-                    <thead>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>帳戶</th>
-                            <th>金額</th>
-                            <th>日期</th>
-                            <th>分類</th>
-                            <th>描述</th>
-                            <th>支付方式</th>
-                            <th>操作</th>
+                            <th scope="col" class="ps-4">日期</th>
+                            <th scope="col">分類</th>
+                            <th scope="col">帳戶</th>
+                            <th scope="col">描述</th>
+                            <th scope="col">支付方式</th>
+                            <th scope="col" class="text-end">金額</th>
+                            <th scope="col" class="text-center">操作</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for expense in expenses %}
+                        {% for item in transactions %}
                         <tr>
-                            <td>{{ expense.account.bank_name }}</td>
-                            <td><span class="text-danger">{{ expense.amount }}</span></td>
-                            <td>{{ expense.date }}</td>
-                            <td>{{ expense.category }}</td>
-                            <td>{{ expense.description }}</td>
-                            <td>{{ expense.payment_method }}</td>
+                            <td class="ps-4 text-secondary">{{ item.date|date:"Y-m-d" }}</td>
+                            
                             <td>
-                                <a href="{% url 'moneytrack:edit_expense' expense.id %}" class="btn btn-sm btn-warning">編輯</a>
-                                <button type="button" 
-                                        class="btn btn-sm btn-danger btn-delete-ajax"
-                                        data-url="{% url 'moneytrack:delete_expense_ajax' expense.id %}"
-                                        data-type="支出">
-                                        刪除
-                                </button>
+                                {% if item.record_type == 'income' %}
+                                    <span class="badge rounded-pill bg-success bg-opacity-10 text-success">
+                                        {{ item.category }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger">
+                                        {{ item.category }}
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>{{ item.account.bank_name }}</td>
+
+                            <td class="text-muted small">
+                                {{ item.description|default:"-" }}
+                            </td>
+
+                            <td class="text-muted small">
+                                {% if item.record_type == 'expense' and item.payment_method %}
+                                    <span>
+                                        <i class="fa-regular fa-credit-card me-1"></i>{{ item.payment_method }}
+                                    </span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end fw-bold">
+                                {% if item.record_type == 'income' %}
+                                    <span class="text-success">+{{ item.amount }}</span>
+                                {% else %}
+                                    <span class="text-danger">-{{ item.amount }}</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-center">
+                                {% if item.record_type == 'income' %}
+                                    <a href="{% url 'moneytrack:edit_income' item.id %}" class="btn btn-sm btn-link text-warning p-0 mx-1" title="編輯">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-link text-danger p-0 mx-1 btn-delete-ajax"
+                                            data-url="{% url 'moneytrack:delete_income_ajax' item.id %}"
+                                            data-type="收入"
+                                            title="刪除">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'moneytrack:edit_expense' item.id %}" class="btn btn-sm btn-link text-warning p-0 mx-1" title="編輯">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-link text-danger p-0 mx-1 btn-delete-ajax"
+                                            data-url="{% url 'moneytrack:delete_expense_ajax' item.id %}"
+                                            data-type="支出"
+                                            title="刪除">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                {% endif %}
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center">目前沒有支出紀錄。</td>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-magnifying-glass mb-2 fs-4"></i>
+                                <p class="mb-0">沒有符合條件的記錄</p>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -112,153 +138,138 @@
             </div>
         </div>
     </div>
-</div>
 
-<div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="transactionModalLabel">新增一筆記錄</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                
-                <div class="transaction-switch-wrapper mb-4">
-                    <button type="button" class="transaction-switch-btn switch-active" id="btn-switch-expense">
-                        <i class="fa-solid fa-money-bill-wave"></i> 支出
-                    </button>
-                    <button type="button" class="transaction-switch-btn switch-inactive" id="btn-switch-income">
-                        <i class="fa-solid fa-sack-dollar"></i> 收入
-                    </button>
+    <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transactionModalLabel">新增一筆記錄</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
-                <form id="expenseForm" method="post" action="{% url 'moneytrack:add_expense' %}" class="needs-validation" novalidate>
-                    {% csrf_token %}
+                <div class="modal-body">
                     
-                    <div class="form-row-custom amount-input-container">
-                        <span class="input-group-text">NT$</span>
-                        <input type="number" step="0.01" name="amount" id="expense_amount" required class="form-control text-danger" placeholder="0" value="0">
-                    </div>
-                    
-                    <div class="form-row-custom">
-                        <label for="expense_category" class="form-label">分類:</label>
-                        <select name="category" id="expense_category" class="form-select">
-                            <option value="餐飲" selected>餐飲</option>
-                            <option value="交通">交通</option>
-                            <option value="購物">購物</option>
-                            <option value="娛樂">娛樂</option>
-                            <option value="醫療">醫療</option>
-                            <option value="家居">家居</option>
-                            <option value="學習">學習</option>
-                            <option value="其他">其他</option>
-                        </select>
+                    <div class="transaction-switch-wrapper mb-4">
+                        <button type="button" class="transaction-switch-btn switch-active" id="btn-switch-expense">
+                            <i class="fa-solid fa-money-bill-wave"></i> 支出
+                        </button>
+                        <button type="button" class="transaction-switch-btn switch-inactive" id="btn-switch-income">
+                            <i class="fa-solid fa-sack-dollar"></i> 收入
+                        </button>
                     </div>
 
-                    
-                    <div class="form-row-custom">
-                        <label for="expense_payment_method" class="form-label">支付方式:</label>
-                        <select name="payment_method" id="expense_payment_method" class="form-select">
-                            <option value="現金" selected>現金</option>
-                            <option value="LINE Pay">LINE Pay</option>
-                            <option value="街口支付">街口支付</option>
-                            <option value="Apple Pay">Apple Pay</option>
-                            <option value="轉帳">轉帳</option>
-                        </select>
-                    </div>
-
-                    <div class="form-row-custom">
-                        <label for="expense_account_select" class="form-label">帳戶:</label>
-                        <div style="flex: 1;">
-                            <select name="account" id="expense_account_select" class="form-select">
-                                {% if accounts %}
-                                    {% for acc in accounts %}
-                                        <option value="{{ acc.id }}">{{ acc.bank_name }}</option>
-                                    {% endfor %}
-                                    <option value="new">新增帳戶...</option>
-                                {% else %}
-                                    <option value="new" selected>新增帳戶...</option>
-                                {% endif %}
+                    <form id="expenseForm" method="post" action="{% url 'moneytrack:add_expense' %}" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="form-row-custom amount-input-container">
+                            <span class="input-group-text">NT$</span>
+                            <input type="number" step="0.01" name="amount" id="expense_amount" required class="form-control text-danger" placeholder="0" value="0">
+                        </div>
+                        <div class="form-row-custom">
+                            <label for="expense_category" class="form-label">分類:</label>
+                            <select name="category" id="expense_category" class="form-select">
+                                <option value="餐飲" selected>餐飲</option>
+                                <option value="交通">交通</option>
+                                <option value="購物">購物</option>
+                                <option value="娛樂">娛樂</option>
+                                <option value="醫療">醫療</option>
+                                <option value="家居">家居</option>
+                                <option value="學習">學習</option>
+                                <option value="其他">其他</option>
                             </select>
-                            <input type="text" name="new_account_name" id="new_expense_account_name" class="form-control mt-2" placeholder="輸入新帳戶名稱" style="display: {% if not accounts %}block{% else %}none{% endif %};">
                         </div>
-                    </div>
-                    
-
-                    <div class="form-row-custom">
-                        <label for="expense_date" class="form-label">日期:</label>
-                        <div class="input-group">
-                            <input type="date" name="date" id="expense_date" required class="form-control" value="{{ 'now'|date:'Y-m-d' }}">
-                            <span class="input-group-text"><i class="fa-regular fa-calendar-days"></i></span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row-custom">
-                        <label for="expense_description" class="form-label">描述:</label>
-                        <input type="text" name="description" id="expense_description" class="form-control" placeholder="填入備註...">
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success w-100 btn-lg btn-save-record">儲存記錄</button>
-                </form>
-
-                <form id="incomeForm" method="post" action="{% url 'moneytrack:add_income' %}" class="needs-validation" style="display:none;" novalidate>
-                    {% csrf_token %}
-                    
-                    <div class="form-row-custom amount-input-container">
-                        <span class="input-group-text">NT$</span>
-                        <input type="number" step="0.01" name="amount" id="income_amount" required class="form-control text-success" placeholder="0" value="0">
-                    </div>
-
-                    <div class="form-row-custom">
-                        <label for="income_category" class="form-label">分類:</label>
-                        <select name="category" id="income_category" class="form-select">
-                            <option value="薪資" selected>薪資</option>
-                            <option value="獎金">獎金</option>
-                            <option value="投資收入">投資收入</option>
-                            <option value="兼職">兼職</option>
-                            <option value="其他">其他</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-row-custom">
-                        <label for="income_account_select" class="form-label">帳戶:</label>
-                        <div style="flex: 1;">
-                            <select name="account" id="income_account_select" class="form-select">
-                                {% if accounts %}
-                                    {% for acc in accounts %}
-                                        <option value="{{ acc.id }}">{{ acc.bank_name }}</option>
-                                    {% endfor %}
-                                    <option value="new">新增帳戶...</option>
-                                {% else %}
-                                    <option value="new" selected>新增帳戶...</option>
-                                {% endif %}
+                        <div class="form-row-custom">
+                            <label for="expense_payment_method" class="form-label">支付方式:</label>
+                            <select name="payment_method" id="expense_payment_method" class="form-select">
+                                <option value="現金" selected>現金</option>
+                                <option value="LINE Pay">LINE Pay</option>
+                                <option value="街口支付">街口支付</option>
+                                <option value="Apple Pay">Apple Pay</option>
+                                <option value="轉帳">轉帳</option>
                             </select>
-                            <input type="text" name="new_account_name" id="new_income_account_name" class="form-control mt-2" placeholder="輸入新帳戶名稱" style="display: {% if not accounts %}block{% else %}none{% endif %};">
                         </div>
-                    </div>
-                    
-                    <div class="form-row-custom">
-                        <label for="income_date" class="form-label">日期:</label>
-                        <div class="input-group">
-                            <input type="date" name="date" id="income_date" required class="form-control" value="{{ 'now'|date:'Y-m-d' }}">
-                            <span class="input-group-text"><i class="fa-regular fa-calendar-days"></i></span>
+                        <div class="form-row-custom">
+                            <label for="expense_account_select" class="form-label">帳戶:</label>
+                            <div style="flex: 1;">
+                                <select name="account" id="expense_account_select" class="form-select">
+                                    {% if accounts %}
+                                        {% for acc in accounts %}
+                                            <option value="{{ acc.id }}">{{ acc.bank_name }}</option>
+                                        {% endfor %}
+                                        <option value="new">新增帳戶...</option>
+                                    {% else %}
+                                        <option value="new" selected>新增帳戶...</option>
+                                    {% endif %}
+                                </select>
+                                <input type="text" name="new_account_name" id="new_expense_account_name" class="form-control mt-2" placeholder="輸入新帳戶名稱" style="display: {% if not accounts %}block{% else %}none{% endif %};">
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-row-custom">
-                        <label for="income_description" class="form-label">描述:</label>
-                        <input type="text" name="description" id="income_description" class="form-control" placeholder="填入備註...">
-                    </div>
+                        <div class="form-row-custom">
+                            <label for="expense_date" class="form-label">日期:</label>
+                            <div class="input-group">
+                                <input type="date" name="date" id="expense_date" required class="form-control" value="{{ 'now'|date:'Y-m-d' }}">
+                                <span class="input-group-text"><i class="fa-regular fa-calendar-days"></i></span>
+                            </div>
+                        </div>
+                        <div class="form-row-custom">
+                            <label for="expense_description" class="form-label">描述:</label>
+                            <input type="text" name="description" id="expense_description" class="form-control" placeholder="填入備註...">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 btn-lg btn-save-record">儲存記錄</button>
+                    </form>
 
-                    <button type="submit" class="btn btn-success w-100 btn-lg btn-save-record">儲存記錄</button>
-                </form>
+                    <form id="incomeForm" method="post" action="{% url 'moneytrack:add_income' %}" class="needs-validation" style="display:none;" novalidate>
+                        {% csrf_token %}
+                        <div class="form-row-custom amount-input-container">
+                            <span class="input-group-text">NT$</span>
+                            <input type="number" step="0.01" name="amount" id="income_amount" required class="form-control text-success" placeholder="0" value="0">
+                        </div>
+                        <div class="form-row-custom">
+                            <label for="income_category" class="form-label">分類:</label>
+                            <select name="category" id="income_category" class="form-select">
+                                <option value="薪資" selected>薪資</option>
+                                <option value="獎金">獎金</option>
+                                <option value="投資收入">投資收入</option>
+                                <option value="兼職">兼職</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-row-custom">
+                            <label for="income_account_select" class="form-label">帳戶:</label>
+                            <div style="flex: 1;">
+                                <select name="account" id="income_account_select" class="form-select">
+                                    {% if accounts %}
+                                        {% for acc in accounts %}
+                                            <option value="{{ acc.id }}">{{ acc.bank_name }}</option>
+                                        {% endfor %}
+                                        <option value="new">新增帳戶...</option>
+                                    {% else %}
+                                        <option value="new" selected>新增帳戶...</option>
+                                    {% endif %}
+                                </select>
+                                <input type="text" name="new_account_name" id="new_income_account_name" class="form-control mt-2" placeholder="輸入新帳戶名稱" style="display: {% if not accounts %}block{% else %}none{% endif %};">
+                            </div>
+                        </div>
+                        <div class="form-row-custom">
+                            <label for="income_date" class="form-label">日期:</label>
+                            <div class="input-group">
+                                <input type="date" name="date" id="income_date" required class="form-control" value="{{ 'now'|date:'Y-m-d' }}">
+                                <span class="input-group-text"><i class="fa-regular fa-calendar-days"></i></span>
+                            </div>
+                        </div>
+                        <div class="form-row-custom">
+                            <label for="income_description" class="form-label">描述:</label>
+                            <input type="text" name="description" id="income_description" class="form-control" placeholder="填入備註...">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 btn-lg btn-save-record">儲存記錄</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script src="{% static 'moneytrack/js/finance_list.js' %}"></script>
 {% endblock %}

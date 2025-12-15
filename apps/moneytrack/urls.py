@@ -29,5 +29,7 @@ urlpatterns = [
 # # AJAX API 端點
     path('api/expense/delete/<int:pk>/', views.delete_expense_ajax, name='delete_expense_ajax'),
     path('api/income/delete/<int:pk>/', views.delete_income_ajax, name='delete_income_ajax'),
+    path('api/account/delete/<int:pk>/', views.DeleteAccountAjaxView.as_view(), name='delete_account_ajax'),
+    
 ]
 
