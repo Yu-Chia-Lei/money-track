@@ -236,7 +236,7 @@ class DeleteAccountView(LoginRequiredMixin, View):
 
 # 圖表頁面
 class ChartsPageView(LoginRequiredMixin, View):
-    login_url = '/accounts/login/'
+    login_url = '/accounts/login/' # 如果沒有登入，則跳轉到登入頁面
     
     def get(self, request):
         return render(request, 'moneytrack/charts.html')
