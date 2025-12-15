@@ -1,6 +1,7 @@
 .env
 .env.local
 
+<<<<<<< HEAD
 
 # macOS
 .DS_Store
@@ -12,6 +13,8 @@ __pycache__/
 # Django
 db.sqlite3
 staticfiles/
+=======
+>>>>>>> renew
 
 # Virtualenv
 venv/

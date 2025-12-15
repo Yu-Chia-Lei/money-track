@@ -49,6 +49,7 @@
       <p>管理所有帳戶，查看餘額明細</p>
     </a>
   </div>
+
   <div class="feature-card">
     <a href="{% url 'moneytrack:finance_list' %}" style="text-decoration: none; color: inherit;">
       <i class="fa-solid fa-receipt"></i>
@@ -56,10 +57,13 @@
       <p>快速新增收入與支出，清楚掌握財務</p>
     </a>
   </div>
+
   <div class="feature-card">
-    <i class="fa-solid fa-chart-bar"></i>
-    <h3>報表與統計</h3>
-    <p>用圖表查看收支趨勢與分類</p>
+    <a href="{% url 'moneytrack:charts_view' %}" style="text-decoration: none; color: inherit;">
+      <i class="fa-solid fa-chart-bar"></i>
+      <h3>報表與統計</h3>
+      <p>用圖表查看收支趨勢與分類</p>
+    </a>
   </div>
 </section>
 {% endblock %}

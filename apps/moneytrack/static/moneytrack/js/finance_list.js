@@ -14,6 +14,7 @@ function setupAccountSelect(selectId, newInputId) {
     }
 }
 
+
 // 模態框中的收入/支出切換邏輯
 const btnSwitchExpense = document.getElementById('btn-switch-expense');
 const btnSwitchIncome = document.getElementById('btn-switch-income');
@@ -48,10 +49,21 @@ function switchToIncome() {
 btnSwitchExpense.addEventListener('click', switchToExpense);
 btnSwitchIncome.addEventListener('click', switchToIncome);
 
+// 2. 主程式執行區 (DOMContentLoaded)
 document.addEventListener('DOMContentLoaded', () => {
     // 1. 初始化帳戶選擇器
     setupAccountSelect('expense_account_select', 'new_expense_account_name');
     setupAccountSelect('income_account_select', 'new_income_account_name');
+
+    // ---------------- [新增這一段] ----------------
+    // 設定「支出」表單的鎖定邏輯
+    // 請將 'expense_payment_method' 換成您 HTML 中「支出-支付方式」的真實 ID
+    //setupPaymentLock('expense_payment_method', 'expense_account_select'); 
+
+    // 設定「收入」表單的鎖定邏輯 (如果收入也需要此功能)
+    // 請將 'income_payment_method' 換成您 HTML 中「收入-支付方式」的真實 ID
+    // setupPaymentLock('income_payment_method', 'income_account_select');
+    // ---------------------------------------------
     
     // 2. 頁面載入時自動彈出 Modal
     const urlParams = new URLSearchParams(window.location.search);
@@ -80,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 清除表單內容
             expenseForm.reset();
             incomeForm.reset();
+
         });
     }
 });

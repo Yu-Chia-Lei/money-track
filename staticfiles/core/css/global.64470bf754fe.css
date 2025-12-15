@@ -1,0 +1,184 @@
+/* core/static/core/css/global.css */
+
+/* Reset & 基本樣式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Noto Sans TC', sans-serif;
+  color: #333; /* 這裡保留，雖然不是最佳實踐，但保持原檔邏輯 */
+}
+
+body {
+  background-color: #fafafa;
+  overflow-x: hidden;
+}
+
+/* Navbar */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 4rem;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Logo 和文字的間距 */
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-decoration: none; 
+  color: #333; /* 確保 Logo 文字顏色正確 */
+}
+
+/* 調整 Logo SVG 的大小 */
+.logo svg {
+    width: 30px;
+    height: 30px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  margin-left: auto;
+  align-items: center;
+}
+
+/* 最終修正: 合併所有狀態並使用 !important 確保強制覆蓋瀏覽器預設藍色 */
+.nav-links a,
+.nav-links a:link,
+.nav-links a:visited,
+.nav-links a:active { 
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+  color: #333 !important; /* 確保強制覆蓋 */
+}
+
+
+
+.nav-links a:hover {
+  color: #4CAF50;
+}
+
+.user-icon {
+  width: 36px;
+  height: 36px;
+  background-color: #f3f3f3;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.user-icon:hover {
+  background-color: #e2e2e2;
+  transform: scale(1.1);
+}
+
+.user-icon-wrapper {
+  display: flex; /* 讓頭像和預設圖示都能在容器內置中對齊 */
+  align-items: center;
+  text-decoration: none;
+}
+
+/* 自訂頭像圖片樣式 */
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover; /* 確保圖片不變形 */
+  border: 2px solid #4CAF50; /* 給頭像一個綠色邊框 */
+  transition: transform 0.3s;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+}
+
+/* Footer (左右對齊版本) */
+footer {
+  background-color: white;
+  text-align: center;
+  padding: 2rem 4rem; 
+  font-size: 0.9rem;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+footer a {
+  text-decoration: none;
+  color: #333;
+  margin-right: 2rem;
+}
+
+footer .footer-right a {
+    margin-right: 0;
+}
+
+footer a:hover {
+  color: #4CAF50;
+}
+
+@media (max-width: 768px) {
+    nav, footer {
+        padding: 1rem 2rem;
+    }
+    .nav-links {
+        gap: 1rem;
+    }
+    footer {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    footer div {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem; 
+    }
+    footer a {
+        margin-right: 0;
+    }
+}
+
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

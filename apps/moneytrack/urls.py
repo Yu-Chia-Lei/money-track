@@ -19,8 +19,12 @@ urlpatterns = [
     path('accounts/add/', views.AddAccountView.as_view(), name='add_account'),
     path('accounts/<int:pk>/edit/', views.EditAccountView.as_view(), name='edit_account'),
     path('accounts/<int:pk>/delete/', views.DeleteAccountView.as_view(), name='delete_account'),
-    
 
+# 統計API URLs
+    path('api/chart-data/', views.ChartDataAPI.as_view(), name='api_chart_data'),
+
+# 圖表頁面
+    path('charts/', views.ChartsPageView.as_view(), name='charts_view'),
 
 
 
