@@ -84,12 +84,21 @@
                 <form method="post" action="{% url 'moneytrack:add_account' %}">
                     {% csrf_token %}
                     
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label for="bank_name" class="form-label text-muted small">帳戶名稱</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="fa-solid fa-signature"></i></span>
-                            <input type="text" class="form-control form-control-lg" id="bank_name" name="bank_name" required placeholder="例如：台新銀行、現金錢包...">
+                            <span class="input-group-text bg-light"><i class="fa-solid fa-building-columns fs-5"></i></span>
+                            <input type="text" class="form-control form-control-lg" id="bank_name" name="bank_name" required placeholder="例如：台新銀行...">
                         </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="balance" class="form-label text-muted small">起始餘額</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">NT$</span>
+                            <input type="number" step="0.01" class="form-control form-control-lg" id="balance" name="balance" value="0" placeholder="0">
+                        </div>
+                        <div class="form-text text-muted small ms-1">若此帳戶已有存款，請在此輸入。</div>
                     </div>
                     
                     <div class="d-grid gap-2">

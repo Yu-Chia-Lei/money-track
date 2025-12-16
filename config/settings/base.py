@@ -210,7 +210,7 @@ CACHES = {
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
-        # 'KEY_PREFIX': 'library',  # 所有 key 都會加上這個前綴
+        'KEY_PREFIX': 'moneytrack',  # 所有 key 都會加上這個前綴
         'TIMEOUT': 300,  # 預設快取時間 5 分鐘（單位：秒）
     }
 }

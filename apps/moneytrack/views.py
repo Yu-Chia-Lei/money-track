@@ -12,7 +12,18 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from operator import attrgetter
 from django.urls import reverse
+from django.core.cache import cache
 
+
+def clear_user_cache(user):
+    """
+    清除該使用者的所有圖表快取
+    """
+    keys_to_delete = [
+        f"chart_data_{user.id}_month",
+        f"chart_data_{user.id}_week"
+    ]
+    cache.delete_many(keys_to_delete)
 
 # ==========================================
 # 1. 獨立的資料處理函數 (共用邏輯)
@@ -144,6 +155,8 @@ class AddIncomeView(LoginRequiredMixin, View):
         # account.balance += amount
         # account.save()
 
+        clear_user_cache(request.user)
+
         return JsonResponse({
             'status': 'success',
             'message': '收入新增成功',
@@ -180,6 +193,8 @@ class AddExpenseView(LoginRequiredMixin, View):
         # account.balance -= amount
         # account.save()
 
+        clear_user_cache(request.user)
+
         return JsonResponse({
             'status': 'success',
             'message': '支出新增成功',
@@ -196,8 +211,21 @@ class AddAccountView(LoginRequiredMixin, View):
     def post(self, request):
         # 獨立新增帳戶
         bank_name = request.POST.get('bank_name')
-        Account.objects.create(user=request.user, bank_name=bank_name, balance=Decimal('0'))
-        return redirect('moneytrack:account_list')
+        # [新增] 接收餘額，如果沒填則預設為 0
+        balance = request.POST.get('balance', 0)
+        
+        # [修改] 建立帳戶時帶入餘額
+        account = Account.objects.create(
+            user=request.user, 
+            bank_name=bank_name,
+            balance=balance  # 這裡把餘額存進去
+        )
+        
+        # 如果你還沒把這個 View 改成 AJAX，維持原本的 redirect
+        return redirect('moneytrack:account_list') 
+        
+        # 如果你想要改成我們剛才討論的 AJAX 風格，則用下面的 JsonResponse：
+        # return JsonResponse({'status': 'success', 'message': '帳戶新增成功'})
 
 
 # 編輯收入
@@ -234,6 +262,8 @@ class EditIncomeView(LoginRequiredMixin, View):
             new_account.balance += income.amount
             new_account.save()
 
+        clear_user_cache(request.user)
+
         return redirect('moneytrack:finance_list')
 
 
@@ -245,6 +275,9 @@ class DeleteIncomeView(LoginRequiredMixin, View):
         account.balance -= income.amount  # 收入刪除 → 餘額減少
         account.save()
         income.delete()
+
+        clear_user_cache(request.user)
+
         return redirect('moneytrack:finance_list')
 
 
@@ -255,6 +288,8 @@ class EditExpenseView(LoginRequiredMixin, View):
         accounts = Account.objects.filter(user=request.user)
 
         payment_methods = ["現金", "LINE Pay", "街口支付", "Apple Pay"]
+
+        
         return render(request, 'moneytrack/edit_expense.html', {
             'expense': expense,
             'accounts': accounts,
@@ -290,6 +325,8 @@ class EditExpenseView(LoginRequiredMixin, View):
             new_account.balance -= expense.amount
             new_account.save()
 
+        clear_user_cache(request.user)
+
         return redirect('moneytrack:finance_list')
 
 
@@ -301,6 +338,9 @@ class DeleteExpenseView(LoginRequiredMixin, View):
         account.balance += expense.amount  # 回復餘額
         account.save()
         expense.delete()
+
+        clear_user_cache(request.user)
+
         return redirect('moneytrack:finance_list')
 
 
@@ -338,6 +378,20 @@ class ChartDataAPI(LoginRequiredMixin, View):
     def get(self, request):
         user = request.user
         mode = request.GET.get('mode', 'month')
+
+        # [新增] 1. 定義快取 Key (每個使用者、每個模式都有獨立的 key)
+        cache_key = f"chart_data_{user.id}_{mode}"
+        
+        # [新增] 2. 嘗試從快取拿資料
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            # [測試用] 加入這行
+            #print(f"🚀 [HIT] 成功從快取讀取資料! Key: {cache_key}")
+            return JsonResponse(cached_data)
+
+        # [測試用] 加入這行
+        #print(f"🐢 [MISS] 無快取，正在執行資料庫運算... Key: {cache_key}")
+
         today = timezone.localdate()
         
         # 初始 QuerySet
@@ -423,6 +477,9 @@ class ChartDataAPI(LoginRequiredMixin, View):
             }
         }
         
+        # [新增] 3. 計算完畢後，寫入快取 (例如存 5 分鐘)
+        cache.set(cache_key, data, timeout=300)
+
         return JsonResponse(data)
 
 
@@ -446,7 +503,9 @@ def delete_expense_ajax(request, pk):
         
         # 2. 刪除
         expense.delete()
-        
+
+        clear_user_cache(request.user)
+
         return JsonResponse({'status': 'success', 'message': '支出已刪除'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
@@ -469,6 +528,8 @@ def delete_income_ajax(request, pk):
         # 2. 刪除
         income.delete()
         
+        clear_user_cache(request.user)
+
         return JsonResponse({'status': 'success', 'message': '收入已刪除'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
@@ -479,6 +540,9 @@ class DeleteAccountAjaxView(LoginRequiredMixin, View):
         try:
             account = get_object_or_404(Account, pk=pk, user=request.user)
             account.delete()
+
+            clear_user_cache(request.user)
+
             return JsonResponse({'status': 'success'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
