@@ -42,5 +42,5 @@ CSRF_COOKIE_SECURE = True  # CSRF Cookie 只能透過 HTTPS 傳輸
 # 信任 Zeabur 的代理伺服器
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-CSRF_TRUSTED_ORIGINS = ['http://money-track.zeabur.app']
+CSRF_TRUSTED_ORIGINS = ['https://money-track.zeabur.app']
 
