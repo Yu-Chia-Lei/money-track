@@ -11,62 +11,109 @@ import datetime
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from operator import attrgetter
+from django.urls import reverse
 
 
-# class HelloWorldView(View):
-#     def get(self, request):
-#         return HttpResponse("Hello, World!")
+# ==========================================
+# 1. 獨立的資料處理函數 (共用邏輯)
+# ==========================================
+def get_filtered_transactions(user, get_params):
+    """
+    接收 user 和 GET 參數，回傳篩選並排序後的交易物件列表
+    """
+    start_date = get_params.get('start_date')
+    end_date = get_params.get('end_date')
+    filter_type = get_params.get('type', 'all')  # all, income, expense
 
+    # 1. 建立基礎 QuerySet
+    incomes = Income.objects.filter(account__user=user)
+    expenses = Expense.objects.filter(account__user=user)
+
+    # 2. 日期篩選
+    if start_date:
+        incomes = incomes.filter(date__gte=start_date)
+        expenses = expenses.filter(date__gte=start_date)
+    if end_date:
+        incomes = incomes.filter(date__lte=end_date)
+        expenses = expenses.filter(date__lte=end_date)
+
+    # 3. 類型篩選與合併
+    results = []
+    
+    # 處理收入
+    if filter_type in ['all', 'income']:
+        for i in incomes:
+            i.record_type = 'income'  # 標記類型，方便後續分辨
+        results.extend(list(incomes))
+        
+    # 處理支出
+    if filter_type in ['all', 'expense']:
+        for e in expenses:
+            e.record_type = 'expense' # 標記類型
+        results.extend(list(expenses))
+
+    # 4. 排序 (由新到舊)
+    results.sort(key=attrgetter('date'), reverse=True)
+    
+    return results
+
+
+# 2. 頁面渲染 View
 class FinanceListView(LoginRequiredMixin, View):
     def get(self, request):
-        # 1. 取得篩選參數
-        filter_type = request.GET.get('type', 'all')  # all, income, expense
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date')
-
-        # 2. 基礎查詢：只抓登入使用者的帳戶
-        accounts = Account.objects.filter(user=request.user)
+        # 這裡不再呼叫 get_filtered_transactions
+        # 我們只準備篩選表單需要的預設值 (例如預設顯示本月)
         
-        income_list = []
-        expense_list = []
-
-        # 3. 根據篩選類型撈取資料，並標記類型 (record_type)
-        if filter_type in ['all', 'income']:
-            incomes = Income.objects.filter(account__in=accounts)
-            if start_date:
-                incomes = incomes.filter(date__gte=start_date)
-            if end_date:
-                incomes = incomes.filter(date__lte=end_date)
-            
-            # 轉為 list 並標記
-            income_list = list(incomes)
-            for i in income_list:
-                i.record_type = 'income'
-
-        if filter_type in ['all', 'expense']:
-            expenses = Expense.objects.filter(account__in=accounts)
-            if start_date:
-                expenses = expenses.filter(date__gte=start_date)
-            if end_date:
-                expenses = expenses.filter(date__lte=end_date)
-            
-            # 轉為 list 並標記
-            expense_list = list(expenses)
-            for e in expense_list:
-                e.record_type = 'expense'
-
-        # 4. 合併並按日期排序 (由新到舊)
-        transactions = sorted(income_list + expense_list, key=attrgetter('date'), reverse=True)
-
+        # (選擇性) 如果你想讓表單預設有值，可以在這裡準備
+        # start_date = ... 
+        
         context = {
-            'accounts': accounts,
-            'transactions': transactions,  # 傳遞合併後的列表
-            'filter_type': filter_type,
-            'start_date': start_date,
-            'end_date': end_date,
+            # 'transactions': ...  <-- 這行刪除！不要傳資料給模板
+            'accounts': Account.objects.filter(user=request.user),
+            
+            # 保留表單預設值 (選擇性，看你想不想在後端控制預設日期)
+            'filter_type': 'all',
+            'start_date': request.GET.get('start_date', ''),
+            'end_date': request.GET.get('end_date', ''),
         }
-
         return render(request, 'moneytrack/finance_list.html', context)
+
+# ==========================================
+# 3. API View (負責 AJAX 篩選，回傳 JSON)
+# ==========================================
+class TransactionFilterApiView(LoginRequiredMixin, View):
+    def get(self, request):
+        # 1. 呼叫共用函數取得物件列表
+        transactions = get_filtered_transactions(request.user, request.GET)
+        
+        # 2. 將物件轉換成 JSON 格式 (Serialization)
+        data_list = []
+        for t in transactions:
+            # 判斷是收入還是支出 (透過 helper function 標記的 record_type)
+            is_income = (t.record_type == 'income')
+            
+            # 生成前端需要的資料結構
+            item = {
+                'id': t.id,
+                'date': t.date.strftime('%Y-%m-%d'), # 日期轉字串
+                'category': t.category,
+                'account_name': t.account.bank_name,
+                'description': t.description or "-",
+                'amount': float(t.amount), # Decimal 轉 float
+                'type': t.record_type,     # 'income' 或 'expense'
+                
+                # 支出才有 payment_method，收入沒有則給 '-'
+                'payment_method': getattr(t, 'payment_method', '-'),
+                
+                # 在後端先生成好 URL，這樣 JS 就不用自己組字串
+                'edit_url': reverse(f'moneytrack:edit_{t.record_type}', args=[t.id]),
+                # 假設你的刪除 URL 是 delete_income_ajax / delete_expense_ajax
+                'delete_url': reverse(f'moneytrack:delete_{t.record_type}_ajax', args=[t.id]),
+            }
+            data_list.append(item)
+
+        # 3. 回傳 JSON
+        return JsonResponse({'status': 'success', 'transactions': data_list})
 
 
 class AddIncomeView(LoginRequiredMixin, View):
@@ -97,7 +144,10 @@ class AddIncomeView(LoginRequiredMixin, View):
         # account.balance += amount
         # account.save()
 
-        return redirect('moneytrack:finance_list')
+        return JsonResponse({
+            'status': 'success',
+            'message': '收入新增成功',
+        })
 
 
 class AddExpenseView(LoginRequiredMixin, View):
@@ -130,7 +180,10 @@ class AddExpenseView(LoginRequiredMixin, View):
         # account.balance -= amount
         # account.save()
 
-        return redirect('moneytrack:finance_list')
+        return JsonResponse({
+            'status': 'success',
+            'message': '支出新增成功',
+        })
 
 
 class AccountListView(LoginRequiredMixin, View):

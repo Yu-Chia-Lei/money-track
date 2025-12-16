@@ -58,81 +58,15 @@
                             <th scope="col" class="text-center">操作</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for item in transactions %}
-                        <tr>
-                            <td class="ps-4 text-secondary">{{ item.date|date:"Y-m-d" }}</td>
-                            
-                            <td>
-                                {% if item.record_type == 'income' %}
-                                    <span class="badge rounded-pill bg-success bg-opacity-10 text-success">
-                                        {{ item.category }}
-                                    </span>
-                                {% else %}
-                                    <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger">
-                                        {{ item.category }}
-                                    </span>
-                                {% endif %}
-                            </td>
-
-                            <td>{{ item.account.bank_name }}</td>
-
-                            <td class="text-muted small">
-                                {{ item.description|default:"-" }}
-                            </td>
-
-                            <td class="text-muted small">
-                                {% if item.record_type == 'expense' and item.payment_method %}
-                                    <span>
-                                        <i class="fa-regular fa-credit-card me-1"></i>{{ item.payment_method }}
-                                    </span>
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-
-                            <td class="text-end fw-bold">
-                                {% if item.record_type == 'income' %}
-                                    <span class="text-success">+{{ item.amount }}</span>
-                                {% else %}
-                                    <span class="text-danger">-{{ item.amount }}</span>
-                                {% endif %}
-                            </td>
-
-                            <td class="text-center">
-                                {% if item.record_type == 'income' %}
-                                    <a href="{% url 'moneytrack:edit_income' item.id %}" class="btn btn-sm btn-link text-warning p-0 mx-1" title="編輯">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </a>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-link text-danger p-0 mx-1 btn-delete-ajax"
-                                            data-url="{% url 'moneytrack:delete_income_ajax' item.id %}"
-                                            data-type="收入"
-                                            title="刪除">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                {% else %}
-                                    <a href="{% url 'moneytrack:edit_expense' item.id %}" class="btn btn-sm btn-link text-warning p-0 mx-1" title="編輯">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </a>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-link text-danger p-0 mx-1 btn-delete-ajax"
-                                            data-url="{% url 'moneytrack:delete_expense_ajax' item.id %}"
-                                            data-type="支出"
-                                            title="刪除">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
+                    <tbody id="transaction-list-body">
                         <tr>
                             <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="fa-solid fa-magnifying-glass mb-2 fs-4"></i>
-                                <p class="mb-0">沒有符合條件的記錄</p>
+                                <div class="spinner-border text-primary mb-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mb-0">正在載入記錄...</p>
                             </td>
                         </tr>
-                        {% endfor %}
                     </tbody>
                 </table>
             </div>
