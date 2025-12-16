@@ -1,3 +1,7 @@
+// ==========================================
+// 1. 工具函式與切換邏輯
+// ==========================================
+
 // 帳戶選擇控制邏輯：新帳戶輸入框的顯示/隱藏
 function setupAccountSelect(selectId, newInputId) {
     const selectElement = document.getElementById(selectId);
@@ -14,7 +18,7 @@ function setupAccountSelect(selectId, newInputId) {
     }
 }
 
-// 模態框中的收入/支出切換邏輯
+// 取得全域元素 (放在外面是為了讓全域都能存取，但要在函式內檢查是否存在)
 const btnSwitchExpense = document.getElementById('btn-switch-expense');
 const btnSwitchIncome = document.getElementById('btn-switch-income');
 const expenseForm = document.getElementById('expenseForm');
@@ -23,44 +27,68 @@ const transactionModalElement = document.getElementById('transactionModal');
 
 function switchToExpense() {
     // 視覺切換
-    btnSwitchExpense.classList.add('switch-active');
-    btnSwitchIncome.classList.remove('switch-active');
+    if (btnSwitchExpense) btnSwitchExpense.classList.add('switch-active');
+    if (btnSwitchIncome) btnSwitchIncome.classList.remove('switch-active');
+    
     // 表單內容切換
-    expenseForm.style.display = 'block';
-    incomeForm.style.display = 'none';
+    if (expenseForm) expenseForm.style.display = 'block';
+    if (incomeForm) incomeForm.style.display = 'none';
+    
     // 金額顏色
-    document.getElementById('expense_amount').classList.add('text-danger');
-    document.getElementById('income_amount').classList.remove('text-success');
+    const expAmt = document.getElementById('expense_amount');
+    const incAmt = document.getElementById('income_amount');
+    if (expAmt) expAmt.classList.add('text-danger');
+    if (incAmt) incAmt.classList.remove('text-success');
 }
 
 function switchToIncome() {
     // 視覺切換
-    btnSwitchIncome.classList.add('switch-active');
-    btnSwitchExpense.classList.remove('switch-active');
+    if (btnSwitchIncome) btnSwitchIncome.classList.add('switch-active');
+    if (btnSwitchExpense) btnSwitchExpense.classList.remove('switch-active');
+    
     // 表單內容切換
-    expenseForm.style.display = 'none';
-    incomeForm.style.display = 'block';
+    if (expenseForm) expenseForm.style.display = 'none';
+    if (incomeForm) incomeForm.style.display = 'block';
+    
     // 金額顏色
-    document.getElementById('expense_amount').classList.remove('text-danger');
-    document.getElementById('income_amount').classList.add('text-success');
+    const expAmt = document.getElementById('expense_amount');
+    const incAmt = document.getElementById('income_amount');
+    if (expAmt) expAmt.classList.remove('text-danger');
+    if (incAmt) incAmt.classList.add('text-success');
 }
 
-btnSwitchExpense.addEventListener('click', switchToExpense);
-btnSwitchIncome.addEventListener('click', switchToIncome);
+// 綁定切換按鈕事件
+if (btnSwitchExpense) btnSwitchExpense.addEventListener('click', switchToExpense);
+if (btnSwitchIncome) btnSwitchIncome.addEventListener('click', switchToIncome);
 
+
+// ==========================================
+// 2. 主程式執行區 (DOMContentLoaded)
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    
     // 1. 初始化帳戶選擇器
     setupAccountSelect('expense_account_select', 'new_expense_account_name');
     setupAccountSelect('income_account_select', 'new_income_account_name');
-    
-    // 2. 頁面載入時自動彈出 Modal
-    const urlParams = new URLSearchParams(window.location.search);
-    const modalParam = urlParams.get('modal');
 
+    // 2. Modal 初始化與事件處理 (核心修復部分)
     if (transactionModalElement) {
-        const modal = new bootstrap.Modal(transactionModalElement);
+        // [關鍵修改] 使用 getOrCreateInstance 避免重複初始化導致按鈕失效
+        const modal = bootstrap.Modal.getOrCreateInstance(transactionModalElement);
         
-        // 根據 URL 參數決定切換模式並打開 Modal
+        // [關鍵修改] 強制幫所有關閉按鈕 (X 和 關閉) 綁定隱藏事件
+        const closeButtons = transactionModalElement.querySelectorAll('[data-bs-dismiss="modal"]');
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault(); // 防止預設行為衝突
+                modal.hide();       // 手動呼叫關閉
+            });
+        });
+
+        // 處理 URL 參數自動開啟 Modal
+        const urlParams = new URLSearchParams(window.location.search);
+        const modalParam = urlParams.get('modal');
+
         if (modalParam === 'income') {
             switchToIncome();
             modal.show();
@@ -68,18 +96,66 @@ document.addEventListener('DOMContentLoaded', () => {
             switchToExpense();
             modal.show();
         } else if (urlParams.has('modal')) {
-            // 如果沒有指定 income/expense，預設彈出並停留在支出模式 (如圖)
             switchToExpense();
             modal.show();
         }
 
-        // Modal 關閉時的清理和重設邏輯
+        // Modal 關閉後的清理工作
         transactionModalElement.addEventListener('hidden.bs.modal', function () {
             // 重設為支出表單 (預設狀態)
             switchToExpense();
             // 清除表單內容
-            expenseForm.reset();
-            incomeForm.reset();
+            if (expenseForm) expenseForm.reset();
+            if (incomeForm) incomeForm.reset();
         });
     }
+
+    // ==========================================
+    // # AJAX 刪除功能
+    // ==========================================
+    document.body.addEventListener('click', function(e) {
+        // 檢查被點擊的元素是否包含 'btn-delete-ajax' class
+        // (如果是點擊到 icon <i>，使用 closest 往上找按鈕)
+        const btn = e.target.closest('.btn-delete-ajax');
+        
+        if (btn) {
+            e.preventDefault();
+            
+            const url = btn.dataset.url;
+            const type = btn.dataset.type || '記錄';
+            const row = btn.closest('tr'); // 找到按鈕所在的該行表格
+
+            if (!confirm(`確定要刪除這筆${type}嗎？此操作無法復原。`)) return;
+
+            // 檢查 sendRequest 是否存在 (定義在 utils.js)
+            if (typeof sendRequest === 'function') {
+                sendRequest({
+                    url: url,
+                    method: "POST",
+                    onSuccess: (res) => {
+                        if (res.status === 'success') {
+                            // 1. 動畫效果 (淡出)
+                            row.style.transition = "all 0.2s ease";
+                            row.style.opacity = "0";
+                            
+                            setTimeout(() => {
+                                // 2. 實際移除 DOM
+                                row.remove();
+                            }, 500);
+                        } else {
+                            alert(res.message || "刪除失敗");
+                        }
+                    },
+                    onError: (err) => {
+                        console.error(err);
+                        alert("發生錯誤，請稍後再試。");
+                    }
+                });
+            } else {
+                console.error("錯誤: utils.js 未載入，找不到 sendRequest 函式");
+                alert("系統錯誤：無法發送請求");
+            }
+        }
+    });
+
 });
