@@ -1,9 +1,15 @@
+import ssl
+import os
+
+# 強制讓這個進程不檢查 SSL 憑證
+ssl._create_default_https_context = ssl._create_unverified_context
+
 """
 Celery 設定檔
 
 這個檔案設定 Celery 與 Django 的整合
 """
-import os
+#import os
 from celery import Celery
 
 # 設定 Django settings module

@@ -1,3 +1,9 @@
+import os
+import certifi
+
+# 強制整個 Django 與 Celery 使用 certifi 套件提供的正確憑證
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
 """
 Django settings for config project.
 
@@ -11,7 +17,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 from dotenv import load_dotenv
 from pathlib import Path
-import os
+#import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -287,5 +293,14 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-
+# ==========================================
+# 郵件設定 (以 Gmail 為例)
+# ==========================================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')       # 在 .env 加入你的 Gmail 帳號
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') # 在 .env 加入「應用程式專用密碼」
+DEFAULT_FROM_EMAIL = f"MoneyTrack 記帳提醒 <{EMAIL_HOST_USER}>"
 

@@ -1,3 +1,7 @@
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+# =====================================
+
 import csv
 import os
 from datetime import datetime
@@ -7,6 +11,11 @@ from django.contrib.auth import get_user_model
 from operator import attrgetter
 import time
 from apps.accounts.models import User
+from django.core.mail import send_mail
+from django.utils import timezone
+
+
+
 
 @shared_task(bind=True)
 def export_transactions_to_csv(self, user_id, start_date=None, end_date=None, filter_type='all'):
@@ -88,16 +97,35 @@ def cleanup_old_reports():
 
 @shared_task
 def check_and_send_reminders():
-    # 取得當前時間的小時與分鐘
-    now = datetime.now()
+    # 取得當前本地時間 (建議使用 timezone 處理時區問題)
+    now = timezone.localtime()
     
-    # 從資料庫中找出：開啟提醒、且設定時間剛好符合現在的使用者
+    # 篩選條件：
+    # 1. 開啟提醒 (is_reminder_on=True)
+    # 2. 小時與分鐘符合現在
+    # 3. email 不為空 (Google 登入者通常會自動填入此欄位)
     users_to_remind = User.objects.filter(
         is_reminder_on=True,
         reminder_time__hour=now.hour,
-        reminder_time__minute=now.minute
-    )
+        reminder_time__minute=now.minute,
+        email__isnull=False
+    ).exclude(email='')
 
     for user in users_to_remind:
-        # 先用 print 測試，成功後可以改為發送 WebSocket 或 Email
-        print(f"發送提醒給 {user.username}: 該記帳囉！")
+        # 執行發送郵件
+        subject = '📝 該記帳囉！MoneyTrack 溫馨提醒'
+        message = f'哈囉 {user.username}，現在是您設定的記帳時間。別忘了花一分鐘記錄今天的開支，維持良好的理財習慣！'
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            print(f"成功發送郵件提醒給: {user.username} ({user.email})")
+        except Exception as e:
+            print(f"發送郵件給 {user.email} 時發生錯誤: {str(e)}")
+
+    return f"已掃描完畢，共發送 {users_to_remind.count()} 封提醒郵件。"
