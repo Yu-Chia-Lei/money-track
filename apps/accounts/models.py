@@ -28,6 +28,18 @@ class User(AbstractUser):
         verbose_name='個人簡介'
     )
 
+    # --- 新增的提醒相關欄位 ---
+    is_reminder_on = models.BooleanField(
+        default=False,
+        verbose_name='是否開啟記帳提醒'
+    )
+
+    reminder_time = models.TimeField(
+        blank=True,
+        null=True,
+        verbose_name='提醒時間'
+    )
+
     class Meta:
         verbose_name = '使用者'
         verbose_name_plural = '使用者'

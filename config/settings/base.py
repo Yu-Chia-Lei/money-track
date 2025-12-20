@@ -56,8 +56,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',  # Google 登入
 
     # Channels（WebSocket 支援）
-    'channels'
-    # 'django_celery_beat',
+    'channels',
+    'django_celery_beat',
 ]
 
 SITE_ID = 1
@@ -271,12 +271,19 @@ from datetime import timedelta
 # ==========================================
 # Celery Beat 排程設定
 # ==========================================
-# 使用 django-celery-beat 的資料庫排程器
+
+
 
 CELERY_BEAT_SCHEDULE = {
+    # 任務一：系統維護，每小時清理一次過期報表
     'cleanup-reports-every-hour': {
         'task': 'apps.moneytrack.tasks.cleanup_old_reports',
-        'schedule': crontab(minute=0),  # 每小時整點執行一次
+        'schedule': crontab(minute=0), 
+    },
+    # 任務二：提醒引擎，每分鐘去資料庫看誰現在該記帳了
+    'check-user-reminders-every-minute': {
+        'task': 'apps.moneytrack.tasks.check_and_send_reminders',
+        'schedule': crontab(minute='*'), 
     },
 }
 

@@ -21,6 +21,9 @@ class CustomUserAdmin(UserAdmin):
         ('額外資訊', {
             'fields': ('phone', 'avatar', 'bio')
         }),
+        ('記帳提醒設定', {
+            'fields': ('is_reminder_on', 'reminder_time')
+        }),
     )
 
     # 新增使用者時的欄位

@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from operator import attrgetter
 import time
-
+from apps.accounts.models import User
 
 @shared_task(bind=True)
 def export_transactions_to_csv(self, user_id, start_date=None, end_date=None, filter_type='all'):
@@ -85,3 +85,19 @@ def cleanup_old_reports():
                 deleted_count += 1
     
     return f"清理完成，共刪除 {deleted_count} 個過期報表。"
+
+@shared_task
+def check_and_send_reminders():
+    # 取得當前時間的小時與分鐘
+    now = datetime.now()
+    
+    # 從資料庫中找出：開啟提醒、且設定時間剛好符合現在的使用者
+    users_to_remind = User.objects.filter(
+        is_reminder_on=True,
+        reminder_time__hour=now.hour,
+        reminder_time__minute=now.minute
+    )
+
+    for user in users_to_remind:
+        # 先用 print 測試，成功後可以改為發送 WebSocket 或 Email
+        print(f"發送提醒給 {user.username}: 該記帳囉！")

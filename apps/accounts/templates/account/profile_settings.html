@@ -1,0 +1,232 @@
+{% extends "core/base.html" %}
+
+{% block extra_css %}
+<style>
+    /* 核心色調 */
+    :root {
+        --mt-green: #4CAF50;
+        --mt-bg: #f8f9fa;
+    }
+
+    .settings-page {
+        background-color: var(--mt-bg);
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+
+    /* 訊息提示方塊 */
+    .mt-toast-container {
+        position: fixed;
+        top: 90px;
+        right: 20px;
+        z-index: 2000;
+    }
+
+    .mt-toast {
+        min-width: 260px;
+        background: white;
+        border-left: 5px solid var(--mt-green);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+
+    /* 設定卡片主體 - 縮小內距 */
+    .settings-card {
+        background: white;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        border: 1px solid rgba(0,0,0,0.02);
+        overflow: hidden;
+        padding: 35px;
+    }
+
+    /* 1. 標題縮小 */
+    .settings-title {
+        color: #333;
+        font-weight: 700;
+        font-size: 1.4rem; /* 1.8rem -> 1.4rem */
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .preference-section {
+        background: #fdfdfd;
+        border: 1px solid #f2f2f2;
+        border-radius: 14px;
+        padding: 20px;
+        margin: 25px 0;
+    }
+
+    /* 2. 儲存按鈕縮小 */
+    .btn-save-main {
+        background-color: var(--mt-green);
+        color: white;
+        font-size: 1.05rem; /* 1.2rem -> 1.05rem */
+        font-weight: 600;
+        padding: 14px;
+        border-radius: 10px;
+        border: none;
+        width: 100%;
+        transition: 0.2s;
+    }
+
+    .btn-save-main:hover {
+        background-color: #388E3C;
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.2);
+    }
+
+    /* 3. 返回首頁縮小 */
+    .return-home-link {
+        font-size: 1rem; /* 1.4rem -> 1rem */
+        font-weight: 600;
+        color: #888 !important;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 25px;
+        transition: 0.2s;
+    }
+
+    .return-home-link:hover {
+        color: var(--mt-green) !important;
+    }
+
+    /* 4. 時間輸入框優化 (Chrome 專用) */
+    input[type="time"].time-picker-input {
+        appearance: auto !important;
+        -webkit-appearance: listbox !important;
+        font-size: 1.6rem !important; /* 2rem -> 1.6rem */
+        font-weight: 700 !important;
+        color: #333 !important;
+        border: 2px solid #eee !important;
+        border-radius: 12px !important;
+        padding: 8px 15px !important;
+        width: 100% !important;
+        max-width: 240px !important;
+        margin: 0 auto !important;
+        display: block !important;
+        text-align: center !important;
+    }
+
+    /* 調整 Chrome 內建箭頭大小 */
+    input[type="time"]::-webkit-inner-spin-button {
+        height: 30px;
+        cursor: pointer;
+    }
+
+    input[type="time"]:focus {
+        border-color: var(--mt-green) !important;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1) !important;
+        outline: none;
+    }
+
+    /* 5. 大開關鈕稍微縮小 */
+    .form-switch .form-check-input {
+        width: 3em !important; /* 3.5em -> 3em */
+        height: 1.5em !important; /* 1.75em -> 1.5em */
+        cursor: pointer;
+        background-color: #e9e9ea;
+        border-color: #dee2e6;
+    }
+
+    .form-switch .form-check-input:checked {
+        background-color: var(--mt-green) !important;
+        border-color: var(--mt-green) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mt-toast-container" id="toast-wrapper">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success mt-toast alert-dismissible fade show shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fa-solid fa-check-circle me-2 text-success"></i>
+                    <div class="small">{{ message }}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size: 0.7rem;"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div class="settings-page">
+    <div class="settings-card text-center">
+        <div class="text-start mb-4">
+            <h2 class="settings-title">
+                <i class="fa-solid fa-bell text-success"></i> 通知提醒
+            </h2>
+            <p class="text-muted small">設定您的每日記帳偏好，養成記帳好習慣。</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="preference-section text-start">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold">啟用每日提醒</span>
+                    <div class="form-check form-switch">
+                        {{ form.is_reminder_on }}
+                    </div>
+                </div>
+                <p class="text-muted" style="font-size: 0.85rem;">開啟後系統將在指定時間發送通知。</p>
+            </div>
+
+            <div class="mb-4 text-start">
+                <label class="form-label fw-bold text-secondary mb-3 small">
+                    <i class="fa-regular fa-clock me-1"></i> 您希望在幾點收到提醒？
+                </label>
+                <div class="px-2 d-flex justify-content-center">
+                    {{ form.reminder_time }}
+                </div>
+                <small class="text-muted d-block mt-3 text-center" style="font-size: 0.75rem;">
+                    直接點擊數字輸入，或使用右側時鐘調整。
+                </small>
+            </div>
+
+            <button type="submit" class="btn-save-main shadow-sm">
+                儲存偏好設定
+            </button>
+        </form>
+
+        <div>
+            <a href="{% url 'core:home' %}" class="return-home-link">
+                <i class="fa-solid fa-house-chimney me-2"></i>返回首頁
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const autoHideAlerts = () => {
+            const alerts = document.querySelectorAll('.mt-toast');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                    if (bsAlert) { bsAlert.close(); }
+                }, 3000);
+            });
+        };
+        autoHideAlerts();
+
+        const observer = new MutationObserver(autoHideAlerts);
+        const wrapper = document.getElementById('toast-wrapper');
+        if (wrapper) {
+            observer.observe(wrapper, { childList: true });
+        }
+    });
+</script>
+{% endblock %}
