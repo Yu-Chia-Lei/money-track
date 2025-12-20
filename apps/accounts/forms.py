@@ -6,17 +6,16 @@ class ReminderSettingsForm(forms.ModelForm):
         model = User
         fields = ['is_reminder_on', 'reminder_time']
         widgets = {
-        'is_reminder_on': forms.CheckboxInput(attrs={
-        'class': 'form-check-input',
-        'role': 'switch',
-        }),
-        'reminder_time': forms.TimeInput(attrs={
-        # 這裡一定要加上 time-picker-input 類別
-        'class': 'form-control time-picker-input', 
-        'type': 'time',
-        'step': '60', # 這行沒加，上下鍵就不能按分鐘調整
-        }),
-}
+            'is_reminder_on': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',
+            }),
+            'reminder_time': forms.TimeInput(attrs={
+                'class': 'form-control time-picker-input', 
+                'type': 'time',
+                'step': '60',  # <-- 必須加上這行，才能啟用上下鍵微調與箭頭
+            }),
+        }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
