@@ -114,7 +114,13 @@ def check_and_send_reminders():
     for user in users_to_remind:
         # 執行發送郵件
         subject = '📝 該記帳囉！MoneyTrack 溫馨提醒'
-        message = f'哈囉 {user.username}，現在是您設定的記帳時間。別忘了花一分鐘記錄今天的開支，維持良好的理財習慣！'
+        message = message = (
+            f"哈囉 {user.username}：\n\n"
+            "現在是您設定的記帳提醒時間。\n"
+            "花一分鐘記錄今天的開支，維持良好的理財習慣！\n\n"
+            "🔗 立即記帳：https://money-track.zeabur.app/\n\n"
+            "MoneyTrack 團隊 敬上"
+        )
         
         try:
             send_mail(

@@ -302,5 +302,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')       # 在 .env 加入你的 Gmail 帳號
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') # 在 .env 加入「應用程式專用密碼」
-DEFAULT_FROM_EMAIL = f"MoneyTrack 記帳提醒 <{EMAIL_HOST_USER}>"
+DEFAULT_FROM_EMAIL = f"MoneyTrack 記帳提醒 <{os.getenv('EMAIL_HOST_USER')}>"
 
