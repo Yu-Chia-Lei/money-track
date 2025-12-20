@@ -20,4 +20,9 @@ venv/
 celerybeat-schedule
 celerybeat-schedule.db
 celerybeat.pid
+celerybeat-schedule-wal
+celerybeat-schedule-shm
+celerybeat-schedule.*
+
+media/
 
