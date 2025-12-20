@@ -1,100 +1,87 @@
-"""
-Celery 任務定義
-
-這裡定義所有 library app 的背景任務
-"""
 import csv
 import os
 from datetime import datetime
 from celery import shared_task
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from operator import attrgetter
+import time
 
 
 @shared_task(bind=True)
-def export_expense_to_csv(self, user: User):
-    """
-    匯出書籍列表為 CSV 檔案
+def export_transactions_to_csv(self, user_id, start_date=None, end_date=None, filter_type='all'):
+    """背景執行：根據篩選條件匯出 CSV 並回傳下載網址"""
+    User = get_user_model()
+    user = User.objects.get(id=user_id)
+    
+    from apps.moneytrack.models import Income, Expense
 
-    Args:
-        self: Celery task instance（因為 bind=True）
-        user: 發起請求的使用者
+    # 1. 執行篩選邏輯 (與你的 API 保持同步)
+    incomes = Income.objects.filter(account__user=user)
+    expenses = Expense.objects.filter(account__user=user)
 
-    Returns:
-        dict: 包含檔案路徑和訊息
-    """
-    # 這裡必須在函數內 import，避免 Django 尚未初始化
-    from apps.moneytrack.models.expense import Expense
+    if start_date:
+        incomes = incomes.filter(date__gte=start_date)
+        expenses = expenses.filter(date__gte=start_date)
+    if end_date:
+        incomes = incomes.filter(date__lte=end_date)
+        expenses = expenses.filter(date__lte=end_date)
 
-    print(f"[Task] 開始匯出支出報表，任務 ID: {self.request.id}")
+    results = []
+    if filter_type in ['all', 'income']:
+        for i in incomes: i.record_type = '收入'; results.append(i)
+    if filter_type in ['all', 'expense']:
+        for e in expenses: e.record_type = '支出'; results.append(e)
 
-    # 1. 查詢所有支出
-    expense = Expense.objects.filter(account__user=user).all()
-    total_expense = expense.count()
+    # 排序 (日期由新到舊)
+    results.sort(key=attrgetter('date'), reverse=True)
 
-    print(f"[Task] 共有 {total_expense} 筆支出要匯出給 {user.username}")
-
-    # 2. 建立匯出目錄（如果不存在）
-    export_dir = os.path.join(settings.BASE_DIR, 'exports')
+    # 2. 存到 Media 目錄
+    relative_path = 'exports'
+    export_dir = os.path.join(settings.MEDIA_ROOT, relative_path)
     os.makedirs(export_dir, exist_ok=True)
 
-    # 3. 產生檔案名稱（包含時間戳記）
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'books_export_{timestamp}.csv'
+    filename = f'report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
     filepath = os.path.join(export_dir, filename)
 
-    # 4. 寫入 CSV 檔案
+    # 3. 寫入 CSV (utf-8-sig 確保 Excel 不亂碼)
     with open(filepath, 'w', newline='', encoding='utf-8-sig') as csvfile:
         writer = csv.writer(csvfile)
-
-        # 寫入標題列
-        writer.writerow(['ID', '金額', '日期', '分類', '描述', '支付方式'])
-
-        # 寫入資料列
-        for expense in expense:
+        writer.writerow(['日期', '類型', '分類', '金額', '帳戶', '備註', '支付方式'])
+        for t in results:
             writer.writerow([
-                expense.id,
-                expense.amount,
-                expense.date,
-                expense.category,
-                expense.description,
-                expense.payment_method,
+                t.date, t.record_type, t.category, t.amount,
+                t.account.bank_name, t.description or "-",
+                getattr(t, 'payment_method', '-')
             ])
 
-    print(f"[Task] 匯出完成：{filepath}")
-
-    # 5. 發送 WebSocket 通知
-    notify_export_complete(user.id, filename)
-
-    return {
-        'status': 'success',
-        'filename': filename,
-        'total_expense': total_expense,
-        'message': f'成功匯出 {total_expense} 筆支出',
-    }
+    # 4. 回傳給 Celery Result (這會被後端 API 抓到)
+    file_url = f"{settings.MEDIA_URL}{relative_path}/{filename}"
+    return {'file_url': file_url}
 
 
-def notify_export_complete(user: User, filename: str):
-    """
-    透過 WebSocket 通知使用者匯出完成
+@shared_task
+def cleanup_old_reports():
+    """自動清理超過 1 小時的舊報表"""
+    #print("===== [Celery Beat] 開始掃描過期報表 =====")
+    export_dir = os.path.join(settings.MEDIA_ROOT, 'exports')
+    
+    # 檢查資料夾是否存在
+    if not os.path.exists(export_dir):
+        return "資料夾不存在，無需清理。"
 
-    Args:
-        user: 使用者
-        filename: 匯出的檔案名稱
-    """
-    from channels.layers import get_channel_layer
-    from asgiref.sync import async_to_sync
+    now = time.time()
+    # 3600 秒 = 1 小時
+    cutoff = now - 3600
 
-    channel_layer = get_channel_layer()
-
-        # 發送到 moneytrack_updates 群組
-    async_to_sync(channel_layer.group_send)(
-        'moneytrack_updates',
-        {
-            'type': 'moneytrack_update',
-            'action': 'export_complete',
-            'message': f'{user.username} 的報表匯出完成！檔案：{filename}',
-        }
-    )
-
-    print(f"[Task] 已發送 WebSocket 通知給 {user.username}")
+    deleted_count = 0
+    for filename in os.listdir(export_dir):
+        file_path = os.path.join(export_dir, filename)
+        
+        # 只處理檔案且判斷修改時間是否早於 cutoff
+        if os.path.isfile(file_path):
+            if os.path.getmtime(file_path) < cutoff:
+                os.remove(file_path)
+                deleted_count += 1
+    
+    return f"清理完成，共刪除 {deleted_count} 個過期報表。"

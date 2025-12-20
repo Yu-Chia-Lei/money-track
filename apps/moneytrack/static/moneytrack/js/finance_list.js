@@ -211,7 +211,94 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================
+    // [新增] 6. 下載報表 (Celery + 輪詢機制)
+    // ==========================================
+    
+    // 下載報表邏輯
+    const downloadBtn = document.getElementById('btn-download-csv');
+
+if (downloadBtn) {
+    downloadBtn.addEventListener('click', function(e) {
+        // 【關鍵 1】防止按鈕觸發任何表單提交或網頁跳轉行為
+        e.preventDefault(); 
+        e.stopPropagation();
+
+        const type = document.getElementById('typeFilter')?.value || 'all';
+        const startDate = document.getElementById('startDate')?.value || '';
+        const endDate = document.getElementById('endDate')?.value || '';
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        const formData = new FormData();
+        formData.append('type', type);
+        formData.append('start_date', startDate);
+        formData.append('end_date', endDate);
+        formData.append('csrfmiddlewaretoken', csrfToken);
+
+        // UI 狀態回饋
+        const originalHTML = downloadBtn.innerHTML;
+        downloadBtn.disabled = true;
+        downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在執行任務...';
+
+        // 1. 發送請求啟動任務
+        fetch('/moneytrack/api/transactions/export/', { 
+            method: 'POST', 
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const taskId = data.task_id;
+                
+                // 2. 定時檢查進度
+                const checkStatus = setInterval(() => {
+                    fetch(`/moneytrack/api/transactions/export/status/${taskId}/`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.status === 'DONE') {
+                            // 【關鍵 2】一旦完成，立刻停止輪詢，防止重複觸發
+                            clearInterval(checkStatus); 
+                            
+                            // 【關鍵 3】使用隱藏的 <a> 標籤觸發「純下載」，不影響當前頁面網址
+                            const link = document.createElement('a');
+                            link.href = res.file_url;
+                            // 加入 download 屬性告訴瀏覽器這是一個檔案，不要打開它
+                            link.setAttribute('download', ''); 
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove(); // 下載後移除標籤
+
+                            // 恢復按鈕狀態
+                            downloadBtn.innerHTML = '<i class="fa-solid fa-check"></i> 下載成功';
+                            downloadBtn.classList.replace('btn-outline-success', 'btn-success');
+
+                            setTimeout(() => {
+                                downloadBtn.disabled = false;
+                                downloadBtn.innerHTML = originalHTML;
+                                downloadBtn.classList.replace('btn-success', 'btn-outline-success');
+                            }, 2000);
+                        }
+                    })
+                    .catch(err => {
+                        clearInterval(checkStatus);
+                        console.error("監測出錯:", err);
+                        downloadBtn.disabled = false;
+                        downloadBtn.innerHTML = originalHTML;
+                    });
+                }, 2000);
+            }
+        })
+        .catch(err => {
+            console.error("啟動失敗:", err);
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = originalHTML;
+        });
+    });
+}
 });
+
+
 
 // ==========================================
 // [新增] 6. 渲染表格函數 (Render Function)
@@ -283,4 +370,5 @@ function renderTable(dataList) {
     }).join('');
 
     tbody.innerHTML = htmlRows;
+
 }

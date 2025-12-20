@@ -259,4 +259,26 @@ CELERY_RESULT_SERIALIZER = 'json'
 # 啟動時重試連線（消除 Celery 6.0 棄用警告）
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
+# ==========================================
+# Media 檔案設定 (用於存放匯出的報表)
+# ==========================================
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+from celery.schedules import crontab
+from datetime import timedelta
+# ==========================================
+# Celery Beat 排程設定
+# ==========================================
+# 使用 django-celery-beat 的資料庫排程器
+
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-reports-every-hour': {
+        'task': 'apps.moneytrack.tasks.cleanup_old_reports',
+        'schedule': crontab(minute=0),  # 每小時整點執行一次
+    },
+}
+
+
 

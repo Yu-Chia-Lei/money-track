@@ -18,30 +18,39 @@
     </div>
 
     <div class="card p-3 shadow-sm border-0 mb-4">
-        <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-3">
+        <form method="get" class="row g-2 align-items-end" id="filterForm">
+            <div class="col-md-2">
                 <label class="form-label small text-muted mb-1">類型</label>
-                <select name="type" class="form-select form-select-sm">
+                <select name="type" id="typeFilter" class="form-select form-select-sm">
                     <option value="all" {% if filter_type == 'all' %}selected{% endif %}>全部收支</option>
                     <option value="income" {% if filter_type == 'income' %}selected{% endif %}>只看收入</option>
                     <option value="expense" {% if filter_type == 'expense' %}selected{% endif %}>只看支出</option>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label small text-muted mb-1">開始日期</label>
-                <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date|default:'' }}">
+                <input type="date" name="start_date" id="startDate" class="form-control form-control-sm" value="{{ start_date|default:'' }}">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label small text-muted mb-1">結束日期</label>
-                <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date|default:'' }}">
+                <input type="date" name="end_date" id="endDate" class="form-control form-control-sm" value="{{ end_date|default:'' }}">
             </div>
+            
             <div class="col-md-3">
                 <button type="submit" class="btn btn-primary btn-sm w-100">
                     <i class="fa-solid fa-filter"></i> 篩選
                 </button>
             </div>
+
+            <div class="col-md-3">
+                <button type="button" id="btn-download-csv" class="btn btn-outline-success btn-sm w-100">
+                    <i class="fa-solid fa-file-csv"></i> 下載報表
+                </button>
+            </div>
         </form>
     </div>
+
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">

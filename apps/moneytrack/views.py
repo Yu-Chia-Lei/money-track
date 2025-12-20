@@ -13,6 +13,8 @@ from django.contrib.auth.decorators import login_required
 from operator import attrgetter
 from django.urls import reverse
 from django.core.cache import cache
+from .tasks import export_transactions_to_csv
+from celery.result import AsyncResult
 
 
 def clear_user_cache(user):
@@ -546,3 +548,34 @@ class DeleteAccountAjaxView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+class ExportTransactionsApiView(LoginRequiredMixin, View):
+    """API：啟動匯出任務"""
+    def post(self, request):
+        task = export_transactions_to_csv.delay(
+            user_id=request.user.id,
+            start_date=request.POST.get('start_date'),
+            end_date=request.POST.get('end_date'),
+            filter_type=request.POST.get('type', 'all')
+        )
+        return JsonResponse({'success': True, 'task_id': task.id})
+
+@login_required
+def check_export_status(request, task_id):
+    res = AsyncResult(task_id)
+    
+    if res.ready():
+        if res.successful():
+            # 任務成功，回傳 DONE 狀態與檔案網址
+            # 這裡的 res.result 來自於 tasks.py 的 return 內容
+            return JsonResponse({
+                'status': 'DONE', 
+                'file_url': res.result.get('file_url')
+            })
+        else:
+            # 任務失敗 (例如程式碼報錯)
+            return JsonResponse({'status': 'ERROR', 'message': '任務執行失敗'})
+            
+    # 還在處理中或是排隊中
+    return JsonResponse({'status': 'PENDING'})

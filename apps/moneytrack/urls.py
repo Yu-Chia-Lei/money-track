@@ -31,5 +31,8 @@ urlpatterns = [
     path('api/income/delete/<int:pk>/', views.delete_income_ajax, name='delete_income_ajax'),
     path('api/account/delete/<int:pk>/', views.DeleteAccountAjaxView.as_view(), name='delete_account_ajax'),
     path('api/transactions/filter/', views.TransactionFilterApiView.as_view(), name='transaction_filter_api'),
+    path('api/transactions/export/', views.ExportTransactionsApiView.as_view(), name='export_transactions_api'),
+    path('api/transactions/export/status/<str:task_id>/', views.check_export_status, name='export_status_api'),
+    
 ]
 
