@@ -119,7 +119,7 @@ def check_and_send_reminders():
             "現在是您設定的記帳提醒時間。\n"
             "花一分鐘記錄今天的開支，維持良好的理財習慣！\n\n"
             "🔗 立即記帳：https://money-track.zeabur.app/\n\n"
-            "MoneyTrack 團隊 敬上"
+            "MoneyTrack 敬上"
         )
         
         try:
