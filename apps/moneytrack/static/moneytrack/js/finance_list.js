@@ -260,11 +260,20 @@ if (downloadBtn) {
                             // 【關鍵 2】一旦完成，立刻停止輪詢，防止重複觸發
                             clearInterval(checkStatus); 
                             
-                            // 【關鍵 3】使用隱藏的 <a> 標籤觸發「純下載」，不影響當前頁面網址
+                            // 【關鍵修改】不要直接使用 res.file_url (因為那是 /media/ 路徑)
+                            // 而是從路徑中取出檔名，並導向我們新的 API
+                            const filename = res.file_url.split('/').pop(); 
+                            const downloadUrl = `/moneytrack/finance/export/download/${filename}/`;
                             const link = document.createElement('a');
-                            link.href = res.file_url;
+                            link.href = downloadUrl; // 改用新的下載網址
+                            link.setAttribute('download', filename);
+
+                            // 【關鍵 3】使用隱藏的 <a> 標籤觸發「純下載」，不影響當前頁面網址
+                            //const link = document.createElement('a');
+                            //link.href = res.file_url;
                             // 加入 download 屬性告訴瀏覽器這是一個檔案，不要打開它
-                            link.setAttribute('download', ''); 
+                            //link.setAttribute('download', ''); 
+
                             document.body.appendChild(link);
                             link.click();
                             link.remove(); // 下載後移除標籤

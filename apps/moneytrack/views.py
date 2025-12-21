@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, Http404, FileResponse
 from .models import Income, Expense, Account
 from django.contrib.auth.mixins import LoginRequiredMixin
 from decimal import Decimal
@@ -15,7 +15,8 @@ from django.urls import reverse
 from django.core.cache import cache
 from .tasks import export_transactions_to_csv
 from celery.result import AsyncResult
-
+import os
+from django.conf import settings
 
 def clear_user_cache(user):
     """
@@ -579,3 +580,21 @@ def check_export_status(request, task_id):
             
     # 還在處理中或是排隊中
     return JsonResponse({'status': 'PENDING'})
+
+
+@login_required
+def download_export_file(request, filename):
+    """
+    專門處理檔案下載的 View，確保在生產環境也能正確抓到媒體檔案。
+    """
+    # 組合實體路徑 (例如: /app/media/exports/transactions_xxx.csv)
+    file_path = os.path.join(settings.MEDIA_ROOT, 'exports', filename)
+    
+    # 安全檢查：確保檔案存在且檔名符合預期
+    if os.path.exists(file_path):
+        # 使用 FileResponse 強制以串流方式下載，並指定 Content-Type
+        response = FileResponse(open(file_path, 'rb'), content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    
+    raise Http404("找不到該報表檔案，請重新產生。")

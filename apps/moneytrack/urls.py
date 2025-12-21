@@ -34,5 +34,7 @@ urlpatterns = [
     path('api/transactions/export/', views.ExportTransactionsApiView.as_view(), name='export_transactions_api'),
     path('api/transactions/export/status/<str:task_id>/', views.check_export_status, name='export_status_api'),
     
+    path('finance/export/download/<str:filename>/', views.download_export_file, name='download_export_file'),
+
 ]
 
