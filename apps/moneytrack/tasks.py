@@ -45,9 +45,9 @@ def export_transactions_to_csv(self, user_id, start_date=None, end_date=None, fi
     # 排序 (日期由新到舊)
     results.sort(key=attrgetter('date'), reverse=True)
 
-    # 2. 存到 Media 目錄
+    # 2. 存到 BASE_DIR目錄
     relative_path = 'exports'
-    export_dir = os.path.join(settings.MEDIA_ROOT, relative_path)
+    export_dir = os.path.join(settings.BASE_DIR, 'exports')
     os.makedirs(export_dir, exist_ok=True)
 
     filename = f'report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
@@ -65,7 +65,7 @@ def export_transactions_to_csv(self, user_id, start_date=None, end_date=None, fi
             ])
 
     # 4. 回傳給 Celery Result (這會被後端 API 抓到)
-    file_url = f"{settings.MEDIA_URL}{relative_path}/{filename}"
+    file_url = f"{settings.BASE_DIR}{relative_path}/{filename}"
     return {'file_url': file_url}
 
 

@@ -26,5 +26,5 @@ urlpatterns = [
     path('moneytrack/', include('apps.moneytrack.urls')), #http://127.0.0.1:8000/moneytrack/
     path('', include('apps.core.urls')), #http://127.0.0.1:8000/
     path('charts/', include('apps.charts.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] #+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
