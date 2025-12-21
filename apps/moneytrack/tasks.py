@@ -47,7 +47,7 @@ def export_transactions_to_csv(self, user_id, start_date=None, end_date=None, fi
 
     # 2. 存到 BASE_DIR目錄
     relative_path = 'exports'
-    export_dir = os.path.join(settings.BASE_DIR, 'exports')
+    export_dir = os.path.join(settings.BASE_DIR, '/exports')
     os.makedirs(export_dir, exist_ok=True)
 
     filename = f'report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
