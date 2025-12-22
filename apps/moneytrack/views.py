@@ -592,7 +592,9 @@ class DownloadExportView(LoginRequiredMixin, View):
           if '..' in filename or '/' in filename:
               raise Http404("檔案不存在")
 
-          filepath = os.path.join(settings.BASE_DIR, 'exports', filename)
+          relative_path = 'exports'
+          export_dir = os.path.join(settings.MEDIA_ROOT, relative_path)
+          filepath = os.path.join(export_dir, filename)
 
           if not os.path.exists(filepath):
               raise Http404("檔案不存在")

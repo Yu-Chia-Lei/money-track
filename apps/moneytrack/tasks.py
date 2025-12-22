@@ -66,7 +66,8 @@ def export_transactions_to_csv(self, user_id, start_date=None, end_date=None, fi
 
     # 4. 回傳給 Celery Result (這會被後端 API 抓到)
     file_url = f"{settings.MEDIA_URL}{relative_path}/{filename}"
-    return {'file_url': file_url}
+    # return {'file_url': file_url}
+    return {'file_url': filename}
 
 
 @shared_task

@@ -260,14 +260,17 @@ if (downloadBtn) {
                             // 【關鍵 2】一旦完成，立刻停止輪詢，防止重複觸發
                             clearInterval(checkStatus); 
                             
-                            // 【關鍵 3】使用隱藏的 <a> 標籤觸發「純下載」，不影響當前頁面網址
+                            const filename = res.file_url; // 這裡拿到的是 report_xxx.csv
+    
+                            // 【關鍵修正】構造指向我們剛剛在 urls.py 設定的路徑
+                            const downloadUrl = `/moneytrack/finance/export/download/${filename}/`;
+
                             const link = document.createElement('a');
-                            link.href = res.file_url;
-                            // 加入 download 屬性告訴瀏覽器這是一個檔案，不要打開它
-                            link.setAttribute('download', ''); 
+                            link.href = downloadUrl; // 使用構造好的 URL
+                            link.setAttribute('download', filename); 
                             document.body.appendChild(link);
                             link.click();
-                            link.remove(); // 下載後移除標籤
+                            link.remove();
 
                             // 恢復按鈕狀態
                             downloadBtn.innerHTML = '<i class="fa-solid fa-check"></i> 下載成功';
