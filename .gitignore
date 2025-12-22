@@ -24,6 +24,10 @@ celerybeat-schedule-wal
 celerybeat-schedule-shm
 celerybeat-schedule.*
 
+
 *.swp
+
+
+# media/
 
 
