@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 from .models import Income, Expense, Account
 from django.contrib.auth.mixins import LoginRequiredMixin
 from decimal import Decimal
@@ -15,6 +15,8 @@ from django.urls import reverse
 from django.core.cache import cache
 from .tasks import export_transactions_to_csv
 from celery.result import AsyncResult
+from django.conf import settings
+
 
 
 def clear_user_cache(user):
@@ -579,3 +581,24 @@ def check_export_status(request, task_id):
             
     # 還在處理中或是排隊中
     return JsonResponse({'status': 'PENDING'})
+
+
+class DownloadExportView(LoginRequiredMixin, View):
+
+      def get(self, request, filename):
+          import os
+
+          # 安全檢查：避免路徑穿越攻擊
+          if '..' in filename or '/' in filename:
+              raise Http404("檔案不存在")
+
+          filepath = os.path.join(settings.BASE_DIR, 'exports', filename)
+
+          if not os.path.exists(filepath):
+              raise Http404("檔案不存在")
+
+          return FileResponse(
+              open(filepath, 'rb'),
+              as_attachment=True,
+              filename=filename
+          )

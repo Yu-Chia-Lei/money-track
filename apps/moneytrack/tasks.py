@@ -135,3 +135,5 @@ def check_and_send_reminders():
             print(f"發送郵件給 {user.email} 時發生錯誤: {str(e)}")
 
     return f"已掃描完畢，共發送 {users_to_remind.count()} 封提醒郵件。"
+
+    
