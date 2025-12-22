@@ -61,6 +61,27 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAccountSelect('expense_account_select', 'new_expense_account_name');
     setupAccountSelect('income_account_select', 'new_income_account_name');
 
+    // === 新增：支付方式選擇「現金」後自動選擇「現金帳戶」 ===
+    const expensePaymentMethod = document.getElementById('expense_payment_method');
+    const expenseAccountSelect = document.getElementById('expense_account_select');
+
+    function syncCashAccount() {
+        if (expensePaymentMethod && expensePaymentMethod.value === '現金') {
+            for (let i = 0; i < expenseAccountSelect.options.length; i++) {
+                if (expenseAccountSelect.options[i].text.includes('現金')) {
+                    expenseAccountSelect.selectedIndex = i;
+                    expenseAccountSelect.dispatchEvent(new Event('change')); // 隱藏「新增帳戶」輸入框
+                    break;
+                }
+            }
+        }
+    }
+
+    if (expensePaymentMethod && expenseAccountSelect) {
+        expensePaymentMethod.addEventListener('change', syncCashAccount);
+    }
+    // =======================================================
+
     // 2. Modal 初始化
     let modalInstance = null;
     if (transactionModalElement) {
@@ -74,6 +95,29 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        // 統一定義設定日期的邏輯
+        const setTodayDate = () => {
+            const today = new Date().toLocaleDateString('en-CA'); 
+            document.querySelectorAll('#expense_date, #income_date').forEach(input => {
+                input.value = today;
+            });
+        };
+
+        // 打開時設定日期與檢查現金連動
+        transactionModalElement.addEventListener('shown.bs.modal', () => {
+            setTodayDate();
+            syncCashAccount(); 
+        });
+
+        // 【唯一保留的關閉監聽器】重設表單並補回日期
+        transactionModalElement.addEventListener('hidden.bs.modal', function () {
+            switchToExpense();
+            if (expenseForm) expenseForm.reset();
+            if (incomeForm) incomeForm.reset();
+            setTodayDate();
+        });
+
+        // 處理 URL 參數開啟彈窗
         const urlParams = new URLSearchParams(window.location.search);
         const modalParam = urlParams.get('modal');
 
@@ -84,15 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
             switchToExpense();
             modalInstance.show();
         }
-
-        transactionModalElement.addEventListener('hidden.bs.modal', function () {
-            switchToExpense();
-            if (expenseForm) expenseForm.reset();
-            if (incomeForm) incomeForm.reset();
-            // 重設日期為今天
-            const today = new Date().toISOString().split('T')[0];
-            document.querySelectorAll('input[type="date"]').forEach(input => input.value = today);
-        });
     }
 
     // ==========================================
@@ -211,7 +246,97 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================
+    // [新增] 6. 下載報表 (Celery + 輪詢機制)
+    // ==========================================
+    
+    // 下載報表邏輯
+    const downloadBtn = document.getElementById('btn-download-csv');
+
+if (downloadBtn) {
+    downloadBtn.addEventListener('click', function(e) {
+        // 【關鍵 1】防止按鈕觸發任何表單提交或網頁跳轉行為
+        e.preventDefault(); 
+        e.stopPropagation();
+
+        const type = document.getElementById('typeFilter')?.value || 'all';
+        const startDate = document.getElementById('startDate')?.value || '';
+        const endDate = document.getElementById('endDate')?.value || '';
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        const formData = new FormData();
+        formData.append('type', type);
+        formData.append('start_date', startDate);
+        formData.append('end_date', endDate);
+        formData.append('csrfmiddlewaretoken', csrfToken);
+
+        // UI 狀態回饋
+        const originalHTML = downloadBtn.innerHTML;
+        downloadBtn.disabled = true;
+        downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在執行任務...';
+
+        // 1. 發送請求啟動任務
+        fetch('/moneytrack/api/transactions/export/', { 
+            method: 'POST', 
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const taskId = data.task_id;
+                
+                // 2. 定時檢查進度
+                const checkStatus = setInterval(() => {
+                    fetch(`/moneytrack/api/transactions/export/status/${taskId}/`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.status === 'DONE') {
+                            // 【關鍵 2】一旦完成，立刻停止輪詢，防止重複觸發
+                            clearInterval(checkStatus); 
+                            
+                            const filename = res.file_url; // 這裡拿到的是 report_xxx.csv
+    
+                            // 【關鍵修正】構造指向我們剛剛在 urls.py 設定的路徑
+                            const downloadUrl = `/moneytrack/finance/export/download/${filename}/`;
+
+                            const link = document.createElement('a');
+                            link.href = downloadUrl; // 使用構造好的 URL
+                            link.setAttribute('download', filename); 
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+
+                            // 恢復按鈕狀態
+                            downloadBtn.innerHTML = '<i class="fa-solid fa-check"></i> 下載成功';
+                            downloadBtn.classList.replace('btn-outline-success', 'btn-success');
+
+                            setTimeout(() => {
+                                downloadBtn.disabled = false;
+                                downloadBtn.innerHTML = originalHTML;
+                                downloadBtn.classList.replace('btn-success', 'btn-outline-success');
+                            }, 2000);
+                        }
+                    })
+                    .catch(err => {
+                        clearInterval(checkStatus);
+                        console.error("監測出錯:", err);
+                        downloadBtn.disabled = false;
+                        downloadBtn.innerHTML = originalHTML;
+                    });
+                }, 2000);
+            }
+        })
+        .catch(err => {
+            console.error("啟動失敗:", err);
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = originalHTML;
+        });
+    });
+}
 });
+
+
 
 // ==========================================
 // [新增] 6. 渲染表格函數 (Render Function)
@@ -283,4 +408,5 @@ function renderTable(dataList) {
     }).join('');
 
     tbody.innerHTML = htmlRows;
+
 }
