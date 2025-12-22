@@ -2,6 +2,26 @@
 // 1. 工具函式與切換邏輯 (保留原本的)
 // ==========================================
 
+// 分類選擇器邏輯：處理點擊圖標切換 active 狀態並更新隱藏 input
+function initCategoryPicker(gridId, inputId) {
+    const grid = document.getElementById(gridId);
+    const input = document.getElementById(inputId);
+    if (!grid || !input) return;
+
+    const items = grid.querySelectorAll('.category-item');
+
+    items.forEach(item => {
+        item.addEventListener('click', () => {
+            // 移除同網格內其他項目的選取狀態
+            items.forEach(i => i.classList.remove('active'));
+            // 為點擊項目加上選取狀態
+            item.classList.add('active');
+            // 更新隱藏 input 的值以利表單送出
+            input.value = item.getAttribute('data-value');
+        });
+    });
+}
+
 // 帳戶選擇控制邏輯
 function setupAccountSelect(selectId, newInputId) {
     const selectElement = document.getElementById(selectId);
@@ -61,6 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAccountSelect('expense_account_select', 'new_expense_account_name');
     setupAccountSelect('income_account_select', 'new_income_account_name');
 
+    // === 新增：初始化分類網格選擇器 ===
+    initCategoryPicker('expense_category_grid', 'expense_category_input');
+    initCategoryPicker('income_category_grid', 'income_category_input');
+    // =============================
+
     // === 新增：支付方式選擇「現金」後自動選擇「現金帳戶」 ===
     const expensePaymentMethod = document.getElementById('expense_payment_method');
     const expenseAccountSelect = document.getElementById('expense_account_select');
@@ -109,30 +134,41 @@ document.addEventListener('DOMContentLoaded', () => {
             syncCashAccount(); 
         });
 
-        // 【唯一保留的關閉監聽器】重設表單並補回日期
+        // 【唯一保留的關閉監聽器】重設表單、補回日期、重設分類、安全清理
         transactionModalElement.addEventListener('hidden.bs.modal', function () {
+            // 1. 基本重設
             switchToExpense();
             if (expenseForm) expenseForm.reset();
             if (incomeForm) incomeForm.reset();
             setTodayDate();
 
-            // 【新增 A】確保視窗完全關閉、遮罩移除後，才去抓新資料
+            // 2. [新增] 重設分類網格的視覺狀態 (回到預設值)
+            document.querySelectorAll('.category-item').forEach(item => item.classList.remove('active'));
+            const defaultExpense = document.querySelector('#expense_category_grid [data-value="餐飲"]');
+            const defaultIncome = document.querySelector('#income_category_grid [data-value="薪資"]');
+            if (defaultExpense) defaultExpense.classList.add('active');
+            if (defaultIncome) defaultIncome.classList.add('active');
+            
+            // 確保隱藏 input 的值也重設
+            if(document.getElementById('expense_category_input')) document.getElementById('expense_category_input').value = "餐飲";
+            if(document.getElementById('income_category_input')) document.getElementById('income_category_input').value = "薪資";
+
+            // 3. 確保視窗完全關閉後，才去抓新資料
             if (typeof loadTransactions === 'function') {
                 loadTransactions();
             }
 
-            // === 改成「安全清理」模式 ===
-            // 檢查畫面上是否還有任何正在顯示的 Modal (避免連續點擊時誤刪新視窗的遮罩)
+            // 4. === 安全清理模式 ===
+            // 檢查畫面上是否還有任何正在顯示的 Modal (避免快速連續點擊時誤刪新視窗的遮罩)
             const openedModals = document.querySelectorAll('.modal.show');
     
             if (openedModals.length === 0) {
-            // 只有當「沒有」其他視窗開啟時，才移除遮罩與鎖定狀態
-            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
+                // 只有當「沒有」其他視窗開啟時，才移除遮罩與鎖定狀態
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
             }
-            
         });
 
         // 處理 URL 參數開啟彈窗
@@ -146,6 +182,19 @@ document.addEventListener('DOMContentLoaded', () => {
             switchToExpense();
             modalInstance.show();
         }
+    }
+
+    // === 新增：防止「新增紀錄」按鈕連點導致動畫出錯 ===
+    const btnNewRecord = document.querySelector('.btn-new-record');
+    if (btnNewRecord) {
+        btnNewRecord.addEventListener('click', function() {
+            const self = this;
+            // 暫時關閉點擊功能，避免 0.5 秒內重複觸發動畫
+            self.style.pointerEvents = 'none'; 
+            setTimeout(() => {
+                self.style.pointerEvents = 'auto'; 
+            }, 500);
+        });
     }
 
     // ==========================================
