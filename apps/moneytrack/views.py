@@ -143,6 +143,11 @@ class AddIncomeView(LoginRequiredMixin, View):
 
         amount = Decimal(request.POST.get('amount'))
         date = request.POST.get('date')
+
+        # [新增防禦]：如果 date 是空的，自動帶入今天
+        if not date:
+            date = timezone.now().date()
+
         category = request.POST.get('category')
         description = request.POST.get('description')
 
@@ -179,6 +184,11 @@ class AddExpenseView(LoginRequiredMixin, View):
 
         amount = Decimal(request.POST.get('amount'))
         date = request.POST.get('date')
+
+        # [新增防禦]：如果 date 是空的，自動帶入今天
+        if not date:
+            date = timezone.now().date()
+            
         category = request.POST.get('category')
         description = request.POST.get('description')
         payment_method = request.POST.get('payment_method')

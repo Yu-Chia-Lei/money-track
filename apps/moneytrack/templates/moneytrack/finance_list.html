@@ -148,7 +148,7 @@
                         <div class="form-row-custom">
                             <label for="expense_date" class="form-label">日期:</label>
                             <div class="input-group">
-                                <input type="date" name="date" id="expense_date" required class="form-control" value="{{ 'now'|date:'Y-m-d' }}">
+                                <input type="date" name="date" id="expense_date" required class="form-control" value="{% now 'Y-m-d' %}">
                                 <span class="input-group-text"><i class="fa-regular fa-calendar-days"></i></span>
                             </div>
                         </div>
@@ -194,7 +194,7 @@
                         <div class="form-row-custom">
                             <label for="income_date" class="form-label">日期:</label>
                             <div class="input-group">
-                                <input type="date" name="date" id="income_date" required class="form-control" value="{{ 'now'|date:'Y-m-d' }}">
+                                <input type="date" name="date" id="income_date" required class="form-control" value="{% now 'Y-m-d' %}">
                                 <span class="input-group-text"><i class="fa-regular fa-calendar-days"></i></span>
                             </div>
                         </div>
