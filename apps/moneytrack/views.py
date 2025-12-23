@@ -604,7 +604,9 @@ class DownloadExportView(LoginRequiredMixin, View):
 
           relative_path = 'exports'
           export_dir = os.path.join(settings.MEDIA_ROOT, relative_path)
+          print(export_dir)
           filepath = os.path.join(export_dir, filename)
+          print(filepath)
 
           if not os.path.exists(filepath):
               raise Http404("檔案不存在")
